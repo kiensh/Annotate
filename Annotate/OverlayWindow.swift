@@ -323,6 +323,38 @@ class OverlayWindow: NSWindow {
 
     override func keyDown(with event: NSEvent) {
         let cmdPressed = event.modifierFlags.contains(.command)
+        let key = event.characters?.lowercased() ?? ""
+
+        // Handle single-key shortcuts if no modifiers are pressed
+        if !cmdPressed
+            && event.modifierFlags.intersection([.command, .option, .control, .shift]).isEmpty
+        {
+            switch key {
+            case ShortcutManager.shared.getShortcut(for: .pen):
+                AppDelegate.shared?.enablePenMode(NSMenuItem())
+                return
+            case ShortcutManager.shared.getShortcut(for: .arrow):
+                AppDelegate.shared?.enableArrowMode(NSMenuItem())
+                return
+            case ShortcutManager.shared.getShortcut(for: .highlighter):
+                AppDelegate.shared?.enableHighlighterMode(NSMenuItem())
+                return
+            case ShortcutManager.shared.getShortcut(for: .rectangle):
+                AppDelegate.shared?.enableRectangleMode(NSMenuItem())
+                return
+            case ShortcutManager.shared.getShortcut(for: .circle):
+                AppDelegate.shared?.enableCircleMode(NSMenuItem())
+                return
+            case ShortcutManager.shared.getShortcut(for: .text):
+                AppDelegate.shared?.enableTextMode(NSMenuItem())
+                return
+            case ShortcutManager.shared.getShortcut(for: .colorPicker):
+                AppDelegate.shared?.showColorPicker(nil)
+                return
+            default:
+                break
+            }
+        }
 
         switch event.keyCode {
         case 53:  // ESC key
@@ -335,20 +367,6 @@ class OverlayWindow: NSWindow {
             }
         case 49:  // Spacebar - toggle drawing mode
             AppDelegate.shared?.toggleFadeMode(NSMenuItem())
-        case 0:  // 'a' key
-            if !cmdPressed { AppDelegate.shared?.enableArrowMode(NSMenuItem()) }
-        case 35:  // 'p' key
-            if !cmdPressed { AppDelegate.shared?.enablePenMode(NSMenuItem()) }
-        case 4:  // 'h' key
-            if !cmdPressed { AppDelegate.shared?.enableHighlighterMode(NSMenuItem()) }
-        case 15:  // 'r' key
-            if !cmdPressed { AppDelegate.shared?.enableRectangleMode(NSMenuItem()) }
-        case 31:  // 'o' key
-            if !cmdPressed { AppDelegate.shared?.enableCircleMode(NSMenuItem()) }
-        case 17:  // 't' key
-            if !cmdPressed { AppDelegate.shared?.enableTextMode(NSMenuItem()) }
-        case 8:  // 'c' key
-            if !cmdPressed { AppDelegate.shared?.showColorPicker(nil) }
         case 13:  // 'w' key
             if cmdPressed { AppDelegate.shared?.closeOverlay() }
         case 6:  // 'z' key

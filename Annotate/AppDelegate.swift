@@ -39,7 +39,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             let colorItem = NSMenuItem(
                 title: "Color",
                 action: #selector(showColorPicker(_:)),
-                keyEquivalent: "c")
+                keyEquivalent: ShortcutManager.shared.getShortcut(for: .colorPicker))
             colorItem.keyEquivalentModifierMask = []
             menu.addItem(colorItem)
 
@@ -56,45 +56,42 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             let arrowModeItem = NSMenuItem(
                 title: "Arrow",
                 action: #selector(enableArrowMode(_:)),
-                keyEquivalent: "a")
+                keyEquivalent: ShortcutManager.shared.getShortcut(for: .arrow))
             arrowModeItem.keyEquivalentModifierMask = []
             menu.addItem(arrowModeItem)
 
             let penModeItem = NSMenuItem(
                 title: "Pen",
                 action: #selector(enablePenMode(_:)),
-                keyEquivalent: "p")
+                keyEquivalent: ShortcutManager.shared.getShortcut(for: .pen))
             penModeItem.keyEquivalentModifierMask = []
             menu.addItem(penModeItem)
 
             let highlighterModeItem = NSMenuItem(
                 title: "Highlighter",
                 action: #selector(enableHighlighterMode(_:)),
-                keyEquivalent: "h"
-            )
+                keyEquivalent: ShortcutManager.shared.getShortcut(for: .highlighter))
             highlighterModeItem.keyEquivalentModifierMask = []
             menu.addItem(highlighterModeItem)
 
             let rectangleModeItem = NSMenuItem(
                 title: "Rectangle",
                 action: #selector(enableRectangleMode(_:)),
-                keyEquivalent: "r"
-            )
+                keyEquivalent: ShortcutManager.shared.getShortcut(for: .rectangle))
             rectangleModeItem.keyEquivalentModifierMask = []
             menu.addItem(rectangleModeItem)
 
             let circleModeItem = NSMenuItem(
                 title: "Circle",
                 action: #selector(enableCircleMode(_:)),
-                keyEquivalent: "o")
+                keyEquivalent: ShortcutManager.shared.getShortcut(for: .circle))
             circleModeItem.keyEquivalentModifierMask = []
             menu.addItem(circleModeItem)
 
             let textModeItem = NSMenuItem(
                 title: "Text",
                 action: #selector(enableTextMode(_:)),
-                keyEquivalent: "t"
-            )
+                keyEquivalent: ShortcutManager.shared.getShortcut(for: .text))
             textModeItem.keyEquivalentModifierMask = []
             menu.addItem(textModeItem)
 
@@ -455,4 +452,29 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // Set the composite image to the status bar button
         statusItem.button?.image = compositeImage
     }
+
+    func updateMenuKeyEquivalents() {
+        guard let menu = statusItem.menu else { return }
+        for item in menu.items {
+            switch item.title {
+            case "Pen":
+                item.keyEquivalent = ShortcutManager.shared.getShortcut(for: .pen)
+            case "Arrow":
+                item.keyEquivalent = ShortcutManager.shared.getShortcut(for: .arrow)
+            case "Highlighter":
+                item.keyEquivalent = ShortcutManager.shared.getShortcut(for: .highlighter)
+            case "Rectangle":
+                item.keyEquivalent = ShortcutManager.shared.getShortcut(for: .rectangle)
+            case "Circle":
+                item.keyEquivalent = ShortcutManager.shared.getShortcut(for: .circle)
+            case "Text":
+                item.keyEquivalent = ShortcutManager.shared.getShortcut(for: .text)
+            case "Color":
+                item.keyEquivalent = ShortcutManager.shared.getShortcut(for: .colorPicker)
+            default:
+                break
+            }
+        }
+    }
+
 }
