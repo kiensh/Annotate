@@ -37,7 +37,7 @@ class OverlayWindow: NSWindow {
             backing: backingStoreType,
             defer: flag)
 
-        self.level = .floating
+        self.level = .normal
         self.backgroundColor = .clear
         self.isOpaque = false
         self.hasShadow = false
