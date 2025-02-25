@@ -22,7 +22,7 @@ final class OverlayWindowTests: XCTestCase {
     }
 
     func testWindowInitialization() {
-        XCTAssertEqual(window.level, .floating)
+        XCTAssertEqual(window.level, .normal)
         XCTAssertFalse(window.isOpaque)
         XCTAssertFalse(window.hasShadow)
         XCTAssertFalse(window.ignoresMouseEvents)

@@ -237,6 +237,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             overlayWindow.orderOut(nil)
             NSApp.hide(nil)
         } else {
+            // Clear drawings if the setting is enabled
+            if UserDefaults.standard.bool(forKey: UserDefaults.clearDrawingsOnStartKey) {
+                overlayWindow.overlayView.clearAll()
+            }
+
             updateStatusBarIcon(with: currentColor)
             let screenFrame = currentScreen.frame
             // Update window frame and position
