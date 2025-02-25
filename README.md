@@ -1,10 +1,13 @@
 <div align="center">
+  <img alt="logo" width="120" src="https://github.com/user-attachments/assets/f994edf4-c4be-46d2-a946-47d728171ffd" />
   <h1>Annotate</h1>
 </div>
 
  <p align="center">
   <strong>A lightweight, keyboard-driven screen annotation tool for macOS that allows you to quickly draw, highlight, and annotate anything on your screen.</strong>
 </p>
+
+![annotate](https://github.com/user-attachments/assets/16baefb6-9fad-4702-9233-2991992ad030)
 
 ## ❓ Why?
 
@@ -75,6 +78,8 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 > [!TIP]
 > The application provides a menu bar item that lets you select tools, choose colors, and perform actions like undo and redo.
 > It also shows the application's active state, current color selection, tool, and mode.
+
+<img width="250" alt="image" src="https://github.com/user-attachments/assets/40a94d67-29f1-49a6-9a3a-453d7f3d89e1" />
 
 ## 🎮 Usage
 
