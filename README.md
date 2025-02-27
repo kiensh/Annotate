@@ -26,7 +26,8 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 - ✨ **Fade/Persist Mode:** Control whether annotations fade out after a duration or persist on the screen.
 - 🌈 **Color Picker:** Easily select and persist your preferred color.
 - 🎛️ **Menu Bar Integration:** Quick access via a status icon.
-- ⌨️ **Keyboard Shortcuts:** Switch between modes and toggle the overlay with simple key commands.
+- 🧹 **Auto-Clear Option:** Automatically clear all drawings when toggling the overlay.
+- ⌨️ **Keyboard Shortcuts:** Switch between modes and toggle the overlay with customizable keyboard shortcuts.
 - ⚡ **Global Hotkey:** Toggle Annotate with a global shortcut.
 
 ## 📦 Installation
@@ -86,7 +87,7 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 
 ### Keyboard Shortcuts
 
-| Action                | Hotkey                                               | Description                                                     |
+| Action                | Default Hotkey                                       | Description                                                     |
 | --------------------- | ---------------------------------------------------- | --------------------------------------------------------------- |
 | **Toggle Overlay**    | Custom (Settings)                                    | Show or hide the annotation overlay.                            |
 | **Close Overlay**     | <kbd>Command</kbd> + <kbd>W</kbd> or <kbd>Esc</kbd>  | Closes the annotation overlay.                                  |
@@ -105,26 +106,69 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 | **Undo**              | <kbd>Command</kbd> + <kbd>Z</kbd>                    | Undo the last action.                                           |
 | **Redo**              | <kbd>Command</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd> | Redo the last undone action.                                    |
 
-### Additional Features
+> [!TIP]
+> All tool shortcuts can be customized in Settings.
 
-#### Shape Drawing
+### Drawing Tools
 
-Hold the <kbd>Option</kbd> key while drawing shapes to expand them from their center point. This is particularly useful for creating symmetrical annotations around a point of interest.
+#### Pen & Highlighter
 
-#### Fade Mode
+- Click and drag to draw freehand lines
+- Pen creates solid lines while highlighter creates semi-transparent, thicker strokes
 
-Toggle between two drawing modes:
+#### Shapes (Rectangle, Circle)
 
-1. Fade Mode: Annotations gradually fade away after a few seconds
-2. Persist Mode: Annotations remain until manually cleared
+- Click and drag to create shapes
+- Hold <kbd>Option</kbd> while drawing rectangles or circles to expand from the center point
+
+#### Arrow
+- Click and drag to create directional arrows
+- Arrows automatically create arrowheads pointing in the direction of the drag
 
 #### Text Annotations
 
+- Click to place a text annotation
+- Type your text and press <kbd>Enter</kbd> or <kbd>Esc</kbd> to finalize
 - Double-click any text annotation to edit its content
 - Click and drag to reposition text
-- Use the color picker to change text color
 
-#### Deletion Controls
+#### Counter Tool
+
+- Click anywhere to add sequential numbered circles (1, 2, 3...)
+- Numbers increment automatically with each click
+
+### Drawing Modes
+
+Toggle between modes with the <kbd>Space</kbd> key.
+
+#### Fade Mode
+
+In fade mode, annotations gradually disappear after a few seconds, keeping your screen clean while allowing for temporary emphasis.
+
+#### Persist Mode
+
+In persist mode, annotations remain on screen until manually cleared, allowing you to build up complex annotations over time.
+
+
+### Deletion Controls
 
 - <kbd>Delete</kbd>: Removes the most recently added annotation.
 - <kbd>Option</kbd> + <kbd>Delete</kbd>: Clear all annotations from the screen.
+
+## ⚙️ Settings
+
+Access the Settings panel from the menu bar icon or by pressing <kbd>Command</kbd> + <kbd>,</kbd>.
+
+
+### General Settings
+
+- **Annotate Hotkey**: Set a global keyboard shortcut to toggle Annotate.
+- **Clear Drawings on Toggle**: Automatically clear all drawings when activating Annotate.
+- **Hide Dock Icon**: Run Annotate in a more minimal mode without a dock icon.
+
+### Keyboard Shortcuts
+
+Customize keyboard shortcuts for all drawing tools by assigning individual shortcut keys for each tool (pen, arrow, highlighter, etc.).
+
+<img width="472" alt="image" src="https://github.com/user-attachments/assets/a4e56146-bc5f-4d9a-a0ab-d41cdbecc696" />
+
