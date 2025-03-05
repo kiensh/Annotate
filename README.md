@@ -25,6 +25,7 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
   - 📝 **Text** annotations with drag & edit support.
 - ✨ **Fade/Persist Mode:** Control whether annotations fade out after a duration or persist on the screen.
 - 🌈 **Color Picker:** Easily select and persist your preferred color.
+- ⬛ **Board**: Toggle whiteboard or blackboard based on system appearance.
 - 🎛️ **Menu Bar Integration:** Quick access via a status icon.
 - 🧹 **Auto-Clear Option:** Automatically clear all drawings when toggling the overlay.
 - ⌨️ **Keyboard Shortcuts:** Switch between modes and toggle the overlay with customizable keyboard shortcuts.
@@ -99,6 +100,7 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 | **Circle Mode**       | <kbd>o</kbd>                                         | Draw circles (hold <kbd>Option</kbd> to expand from center).    |
 | **Text Mode**         | <kbd>t</kbd>                                         | Add text annotations.                                           |
 | **Counter Mode**      | <kbd>n</kbd>                                         | Add sequential numbered circles.                                |
+| **Toggle Board**      | <kbd>b</kbd>                                         | Toggle whiteboard/blackboard.                        |
 | **Finalize Text**     | <kbd>Enter</kbd> or <kbd>Esc</kbd>                   | Finalize text input (empty text removes it).                    |
 | **Toggle Fade Mode**  | <kbd>Space</kbd>                                     | Switch between fade and persist modes.                          |
 | **Delete Last**       | <kbd>Delete</kbd>                                    | Remove the most recent annotation.                              |
