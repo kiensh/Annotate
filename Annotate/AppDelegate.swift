@@ -30,7 +30,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             UserDefaults.standard.object(forKey: UserDefaults.fadeModeKey) as? Bool ?? true
         overlayWindows.values.forEach { $0.overlayView.fadeMode = persistedFadeMode }
 
-        setupScreenNotifications()
+        let enableBoard = UserDefaults.standard.bool(forKey: UserDefaults.enableBoardKey)
+        overlayWindows.values.forEach {
+            $0.boardView.isHidden = !enableBoard
+            $0.overlayView.updateAdaptColors(boardEnabled: enableBoard)
+        }
+
+        setupBoardObservers()
     }
 
     func updateDockIconVisibility() {
@@ -119,6 +125,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
             menu.addItem(NSMenuItem.separator())
 
+            let isDarkMode =
+                NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            let boardType = isDarkMode ? "Blackboard" : "Whiteboard"
+            let boardEnabled = UserDefaults.standard.bool(forKey: UserDefaults.enableBoardKey)
+            let toggleBoardItem = NSMenuItem(
+                title: boardEnabled ? "Hide \(boardType)" : "Show \(boardType)",
+                action: #selector(toggleBoardVisibility(_:)),
+                keyEquivalent: ShortcutManager.shared.getShortcut(for: .toggleBoard))
+            toggleBoardItem.keyEquivalentModifierMask = []
+            menu.addItem(toggleBoardItem)
+
+            menu.addItem(NSMenuItem.separator())
+
             let persistedFadeMode =
                 UserDefaults.standard.object(forKey: UserDefaults.fadeModeKey) as? Bool ?? true
             let currentDrawingModeItem = NSMenuItem(
@@ -183,15 +202,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
             statusItem.menu = menu
         }
-    }
-
-    func setupScreenNotifications() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(screenParametersChanged),
-            name: NSApplication.didChangeScreenParametersNotification,
-            object: nil
-        )
     }
 
     @objc func screenParametersChanged() {
@@ -369,6 +379,56 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
     }
 
+    @objc func toggleBoardVisibility(_ sender: Any?) {
+        BoardManager.shared.toggle()
+        updateBoardMenuItems()
+        showOverlay()
+    }
+
+    func updateBoardMenuItems() {
+        guard let menu = statusItem.menu else { return }
+
+        let boardType = BoardManager.shared.displayName
+        let boardEnabled = BoardManager.shared.isEnabled
+
+        let toggleBoardItem = menu.items.first { $0.action == #selector(toggleBoardVisibility(_:)) }
+
+        if let item = toggleBoardItem {
+            item.title = boardEnabled ? "Hide \(boardType)" : "Show \(boardType)"
+        }
+    }
+
+    func setupBoardObservers() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(screenParametersChanged),
+            name: NSApplication.didChangeScreenParametersNotification,
+            object: nil
+        )
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(boardStateChanged),
+            name: .boardStateChanged,
+            object: nil
+        )
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(boardAppearanceChanged),
+            name: .boardAppearanceChanged,
+            object: nil
+        )
+    }
+
+    @objc func boardStateChanged() {
+        updateBoardMenuItems()
+    }
+
+    @objc func boardAppearanceChanged() {
+        updateBoardMenuItems()
+    }
+
     @objc func undo() {
         if let currentScreen = getCurrentScreen(),
             let overlayWindow = overlayWindows[currentScreen],
@@ -406,8 +466,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         UserDefaults.standard.set(!isCurrentlyFadeMode, forKey: UserDefaults.fadeModeKey)
 
         if let menu = statusItem.menu {
-            let currentDrawingModeItem = menu.item(at: 11)
-            let toggleDrawingModeItem = menu.item(at: 12)
+            let currentDrawingModeItem = menu.item(at: 13)
+            let toggleDrawingModeItem = menu.item(at: 14)
 
             currentDrawingModeItem?.title =
                 isCurrentlyFadeMode
@@ -522,10 +582,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 item.keyEquivalent = ShortcutManager.shared.getShortcut(for: .text)
             case "Color":
                 item.keyEquivalent = ShortcutManager.shared.getShortcut(for: .colorPicker)
+            case let title where title.hasPrefix("Show") || title.hasPrefix("Hide"):
+                if item.action == #selector(toggleBoardVisibility(_:)) {
+                    item.keyEquivalent = ShortcutManager.shared.getShortcut(for: .toggleBoard)
+                }
             default:
                 break
             }
         }
     }
-
 }
