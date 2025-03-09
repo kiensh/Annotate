@@ -18,13 +18,6 @@ struct SettingsView: View {
 
                     Divider()
 
-                    Slider(value: $boardOpacity, in: 0.1...1.0) {
-                        Text("Board Opacity: \(Int(boardOpacity * 100))%")
-                    }
-                    .onChange(of: boardOpacity) { oldValue, newValue in
-                        BoardManager.shared.opacity = newValue
-                    }
-
                     Toggle("Clear Drawings on Toggle", isOn: $clearDrawingsOnStart)
                         .toggleStyle(.checkbox)
                         .help(
@@ -37,6 +30,21 @@ struct SettingsView: View {
                         .onChange(of: hideDockIcon) {
                             AppDelegate.shared?.updateDockIconVisibility()
                         }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 8)
+            }
+            .frame(maxWidth: .infinity)
+
+            GroupBox("Board") {
+                VStack(alignment: .center, spacing: 12) {
+                    Slider(value: $boardOpacity, in: 0.1...1.0) {
+                        Text("Opacity: \(Int(boardOpacity * 100))%")
+                    }
+                    .onChange(of: boardOpacity) { oldValue, newValue in
+                        BoardManager.shared.opacity = newValue
+                    }
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.horizontal, 8)
@@ -90,13 +98,12 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .frame(maxWidth: .infinity)
-
-            Spacer()
         }
         .padding(16)
         .frame(width: 360)
         .onAppear {
             shortcuts = ShortcutManager.shared.allShortcuts
+            boardOpacity = BoardManager.shared.opacity
         }
     }
 }

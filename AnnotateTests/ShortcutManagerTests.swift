@@ -21,9 +21,9 @@ final class ShortcutManagerTests: XCTestCase {
 
     func testSetNewShortcut() {
         // Set a new shortcut for Pen (provided it doesn't conflict).
-        ShortcutManager.shared.setShortcut("x", for: .pen)
+        ShortcutManager.shared.setShortcut("f", for: .pen)
         XCTAssertEqual(
-            ShortcutManager.shared.getShortcut(for: .pen), "x", "Pen shortcut should update to 'x'")
+            ShortcutManager.shared.getShortcut(for: .pen), "f", "Pen shortcut should update to 'f'")
     }
 
     func testDuplicateShortcutNotAllowed() {
@@ -37,15 +37,15 @@ final class ShortcutManagerTests: XCTestCase {
 
     func testResetToDefault() {
         // Change a shortcut and then reset it.
-        ShortcutManager.shared.setShortcut("x", for: .pen)
-        XCTAssertEqual(ShortcutManager.shared.getShortcut(for: .pen), "x")
+        ShortcutManager.shared.setShortcut("f", for: .pen)
+        XCTAssertEqual(ShortcutManager.shared.getShortcut(for: .pen), "f")
         ShortcutManager.shared.resetToDefault(tool: .pen)
         XCTAssertEqual(ShortcutManager.shared.getShortcut(for: .pen), ShortcutKey.pen.defaultKey)
     }
 
     func testResetAllToDefault() {
         // Change a few shortcuts and then reset all.
-        ShortcutManager.shared.setShortcut("x", for: .pen)
+        ShortcutManager.shared.setShortcut("f", for: .pen)
         ShortcutManager.shared.setShortcut("y", for: .arrow)
         ShortcutManager.shared.resetAllToDefault()
         for tool in ShortcutKey.allCases {

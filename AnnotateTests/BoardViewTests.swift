@@ -18,8 +18,6 @@ final class BoardViewTests: XCTestCase {
     func testBoardViewInitialization() {
         XCTAssertTrue(boardView.wantsLayer, "BoardView should have wantsLayer set to true")
         XCTAssertNotNil(boardView.layer, "BoardView should have a layer")
-        XCTAssertEqual(boardView.layer?.cornerRadius, 8, "BoardView should have rounded corners")
-        XCTAssertTrue(boardView.layer?.masksToBounds ?? false, "BoardView should mask to bounds")
         XCTAssertEqual(boardView.layer?.borderWidth, 1, "BoardView should have a border")
     }
 

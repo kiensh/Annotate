@@ -38,8 +38,6 @@ class BoardView: NSView {
 
     private func commonInit() {
         wantsLayer = true
-        layer?.cornerRadius = 8
-        layer?.masksToBounds = true
         layer?.borderWidth = 1
 
         updateForAppearance()
