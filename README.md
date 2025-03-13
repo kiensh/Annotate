@@ -18,6 +18,7 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 - 🎨 **Drawing Tools**:
   - ✒️ **Pen** tool for freehand drawing.
   - ➡️ **Arrow** tool for directional indicators.
+  - 📏 **Line** tool for straight lines.
   - 🟨 **Highlighter** for emphasizing content.
   - 🔲 **Rectangle** shapes for boxing content.
   - ⭕ **Circle** shapes for highlighting areas.
@@ -51,6 +52,9 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 
 > [!NOTE]
 > Make sure your macOS version is 15 or later.
+>
+> The app isn't signed with an Apple developer certificate.
+> You'll need to authorize the app through System Settings → Privacy & Security by clicking "Open Anyway" or see below to build it from source.
 
 ### Build from Source
 
@@ -95,12 +99,13 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 | **Open Color Picker** | <kbd>c</kbd>                                         | Open the color selection menu for tools.                        |
 | **Pen Mode**          | <kbd>p</kbd>                                         | Draw freehand lines.                                            |
 | **Arrow Mode**        | <kbd>a</kbd>                                         | Draw arrows.                                                    |
+| **Line Mode**         | <kbd>l</kbd>                                         | Draw straight lines.                                            |
 | **Highlighter Mode**  | <kbd>h</kbd>                                         | Highlight areas with a soft brush.                              |
 | **Rectangle Mode**    | <kbd>r</kbd>                                         | Draw rectangles (hold <kbd>Option</kbd> to expand from center). |
 | **Circle Mode**       | <kbd>o</kbd>                                         | Draw circles (hold <kbd>Option</kbd> to expand from center).    |
 | **Text Mode**         | <kbd>t</kbd>                                         | Add text annotations.                                           |
 | **Counter Mode**      | <kbd>n</kbd>                                         | Add sequential numbered circles.                                |
-| **Toggle Board**      | <kbd>b</kbd>                                         | Toggle whiteboard/blackboard.                        |
+| **Toggle Board**      | <kbd>b</kbd>                                         | Toggle whiteboard/blackboard.                                   |
 | **Finalize Text**     | <kbd>Enter</kbd> or <kbd>Esc</kbd>                   | Finalize text input (empty text removes it).                    |
 | **Toggle Fade Mode**  | <kbd>Space</kbd>                                     | Switch between fade and persist modes.                          |
 | **Delete Last**       | <kbd>Delete</kbd>                                    | Remove the most recent annotation.                              |
@@ -123,9 +128,11 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 - Click and drag to create shapes
 - Hold <kbd>Option</kbd> while drawing rectangles or circles to expand from the center point
 
-#### Arrow
-- Click and drag to create directional arrows
+#### Arrow & Line
+
+- Click and drag to create directional arrows or straight lines
 - Arrows automatically create arrowheads pointing in the direction of the drag
+- Lines create simple straight connections between two points
 
 #### Text Annotations
 
@@ -151,7 +158,6 @@ In fade mode, annotations gradually disappear after a few seconds, keeping your 
 
 In persist mode, annotations remain on screen until manually cleared, allowing you to build up complex annotations over time.
 
-
 ### Deletion Controls
 
 - <kbd>Delete</kbd>: Removes the most recently added annotation.
@@ -160,7 +166,6 @@ In persist mode, annotations remain on screen until manually cleared, allowing y
 ## ⚙️ Settings
 
 Access the Settings panel from the menu bar icon or by pressing <kbd>Command</kbd> + <kbd>,</kbd>.
-
 
 ### General Settings
 
@@ -172,5 +177,4 @@ Access the Settings panel from the menu bar icon or by pressing <kbd>Command</kb
 
 Customize keyboard shortcuts for all drawing tools by assigning individual shortcut keys for each tool (pen, arrow, highlighter, etc.).
 
-<img width="472" alt="image" src="https://github.com/user-attachments/assets/a4e56146-bc5f-4d9a-a0ab-d41cdbecc696" />
-
+<img width="472" alt="image" src="https://github.com/user-attachments/assets/37d3498b-baa8-4fa5-93b0-6d2f8cc9246d" />
