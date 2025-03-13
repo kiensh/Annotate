@@ -5,7 +5,7 @@ class OverlayView: NSView, NSTextFieldDelegate {
 
     var arrows: [Arrow] = []
     var currentArrow: Arrow?
-    
+
     var lines: [Line] = []
     var currentLine: Line?
 
@@ -181,11 +181,13 @@ class OverlayView: NSView, NSTextFieldDelegate {
                 target.needsDisplay = true
             }
         case .clearAll(
-            let paths, let arrows, let highlights, let rectangles, let circles, let textAnnotations,
+            let paths, let arrows, let lines, let highlights, let rectangles, let circles,
+            let textAnnotations,
             let counterAnnotations):
             undoManager?.registerUndo(withTarget: self) { target in
                 target.paths = paths
                 target.arrows = arrows
+                target.lines = lines
                 target.highlightPaths = highlights
                 target.rectangles = rectangles
                 target.circles = circles
@@ -193,7 +195,7 @@ class OverlayView: NSView, NSTextFieldDelegate {
                 target.counterAnnotations = counterAnnotations
                 target.nextCounterNumber =
                     counterAnnotations.map { $0.number }.max().map { $0 + 1 } ?? 1
-                target.registerUndo(action: .clearAll([], [], [], [], [], [], []))
+                target.registerUndo(action: .clearAll([], [], [], [], [], [], [], []))
                 target.needsDisplay = true
             }
         }
@@ -228,7 +230,7 @@ class OverlayView: NSView, NSTextFieldDelegate {
         if let arrow = currentArrow {
             drawArrow(from: arrow.startPoint, to: arrow.endPoint, color: arrow.color)
         }
-        
+
         // Draw lines
         var aliveLines: [Line] = []
         for line in lines {
@@ -438,14 +440,14 @@ class OverlayView: NSView, NSTextFieldDelegate {
         path.lineWidth = 3.0
         path.stroke()
     }
-    
+
     private func drawLine(from start: NSPoint, to end: NSPoint, color: NSColor) {
         let adaptedColor = adaptColorForBoard(color, boardType: currentBoardType)
 
         let path = NSBezierPath()
         path.move(to: start)
         path.line(to: end)
-        
+
         adaptedColor.setStroke()
         path.lineWidth = 3.0
         path.stroke()
@@ -573,7 +575,8 @@ class OverlayView: NSView, NSTextFieldDelegate {
 
     func clearAll() {
         // Only register undo if there's something to clear
-        if !paths.isEmpty || !arrows.isEmpty || !lines.isEmpty || !highlightPaths.isEmpty || !rectangles.isEmpty
+        if !paths.isEmpty || !arrows.isEmpty || !lines.isEmpty || !highlightPaths.isEmpty
+            || !rectangles.isEmpty
             || !circles.isEmpty || !textAnnotations.isEmpty || !counterAnnotations.isEmpty
         {
             let oldPaths = paths
@@ -771,7 +774,7 @@ class OverlayView: NSView, NSTextFieldDelegate {
             }
             return false
         }
-        
+
         let stillFadingLines = lines.contains { line in
             if let creationTime = line.creationTime {
                 return (now - creationTime) < fadeDuration

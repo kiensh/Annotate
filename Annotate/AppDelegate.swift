@@ -80,7 +80,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 keyEquivalent: ShortcutManager.shared.getShortcut(for: .arrow))
             arrowModeItem.keyEquivalentModifierMask = []
             menu.addItem(arrowModeItem)
-            
+
             let lineModeItem = NSMenuItem(
                 title: "Line",
                 action: #selector(enableLineMode(_:)),
@@ -337,7 +337,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             currentToolItem?.title = "Current Tool: Arrow"
         }
     }
-    
+
     @objc func enableLineMode(_ sender: NSMenuItem) {
         switchTool(to: .line)
         if let menu = statusItem.menu {
@@ -481,8 +481,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         UserDefaults.standard.set(!isCurrentlyFadeMode, forKey: UserDefaults.fadeModeKey)
 
         if let menu = statusItem.menu {
-            let currentDrawingModeItem = menu.item(at: 13)
-            let toggleDrawingModeItem = menu.item(at: 14)
+            let currentDrawingModeItem = menu.item(at: 14)
+            let toggleDrawingModeItem = menu.item(at: 15)
 
             currentDrawingModeItem?.title =
                 isCurrentlyFadeMode
