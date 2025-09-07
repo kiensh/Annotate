@@ -3,11 +3,11 @@ import Cocoa
 import SwiftUI
 
 @MainActor
-class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverDelegate {
     static weak var shared: AppDelegate?
 
     var statusItem: NSStatusItem!
-    var colorPopover: NSPopover!
+    var colorPopover: NSPopover?
     var currentColor: NSColor = .systemRed
     var hotkeyMonitor: Any?
     var overlayWindows: [NSScreen: OverlayWindow] = [:]
@@ -260,17 +260,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     @objc func showColorPicker(_ sender: Any?) {
         if colorPopover == nil {
             colorPopover = NSPopover()
-            colorPopover.contentViewController = ColorPickerViewController()
-            colorPopover.behavior = .transient
+            colorPopover?.contentViewController = ColorPickerViewController()
+            colorPopover?.behavior = .transient
+            colorPopover?.delegate = self
         }
 
         if let button = statusItem.button {
-            colorPopover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            colorPopover?.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
 
-            if let popoverWindow = colorPopover.contentViewController?.view.window {
+            if let popoverWindow = colorPopover?.contentViewController?.view.window {
                 popoverWindow.level = .popUpMenu
             }
         }
+    }
+
+    func popoverWillClose(_ notification: Notification) {
+        colorPopover = nil
     }
 
     @objc func toggleOverlay() {
@@ -329,11 +334,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         overlayWindows.values.forEach { window in
             window.overlayView.currentTool = tool
         }
-        showOverlay()
     }
 
     @objc func enableArrowMode(_ sender: NSMenuItem) {
         switchTool(to: .arrow)
+        showOverlay()
         if let menu = statusItem.menu {
             let currentToolItem = menu.item(at: 2)
             currentToolItem?.title = "Current Tool: Arrow"
@@ -342,6 +347,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     @objc func enableLineMode(_ sender: NSMenuItem) {
         switchTool(to: .line)
+        showOverlay()
         if let menu = statusItem.menu {
             let currentToolItem = menu.item(at: 2)
             currentToolItem?.title = "Current Tool: Line"
@@ -350,6 +356,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     @objc func enablePenMode(_ sender: NSMenuItem) {
         switchTool(to: .pen)
+        showOverlay()
         if let menu = statusItem.menu {
             let currentToolItem = menu.item(at: 2)
             currentToolItem?.title = "Current Tool: Pen"
@@ -358,6 +365,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     @objc func enableHighlighterMode(_ sender: NSMenuItem) {
         switchTool(to: .highlighter)
+        showOverlay()
         if let menu = statusItem.menu {
             let currentToolItem = menu.item(at: 2)
             currentToolItem?.title = "Current Tool: Highlighter"
@@ -366,6 +374,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     @objc func enableRectangleMode(_ sender: NSMenuItem) {
         switchTool(to: .rectangle)
+        showOverlay()
         if let menu = statusItem.menu {
             let currentToolItem = menu.item(at: 2)
             currentToolItem?.title = "Current Tool: Rectangle"
@@ -374,6 +383,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     @objc func enableCircleMode(_ sender: NSMenuItem) {
         switchTool(to: .circle)
+        showOverlay()
         if let menu = statusItem.menu {
             let currentToolItem = menu.item(at: 2)
             currentToolItem?.title = "Current Tool: Circle"
@@ -382,6 +392,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     @objc func enableCounterMode(_ sender: NSMenuItem) {
         switchTool(to: .counter)
+        showOverlay()
         if let menu = statusItem.menu {
             let currentToolItem = menu.item(at: 2)
             currentToolItem?.title = "Current Tool: Counter"
@@ -390,6 +401,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     @objc func enableTextMode(_ sender: NSMenuItem) {
         switchTool(to: .text)
+        showOverlay()
         if let menu = statusItem.menu {
             let currentToolItem = menu.item(at: 2)
             currentToolItem?.title = "Current Tool: Text"

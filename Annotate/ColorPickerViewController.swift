@@ -165,8 +165,8 @@ class ColorPickerViewController: NSViewController {
         appDelegate.updateStatusBarIcon(with: selectedColor)
 
         // Close the popover
-        if let presentingPopover = self.view.window?.parent?.contentViewController as? NSPopover {
-            presentingPopover.close()
+        if let popover = AppDelegate.shared?.colorPopover {
+            popover.performClose(nil)
         } else if let parentWindow = self.view.window {
             parentWindow.close()
         }
