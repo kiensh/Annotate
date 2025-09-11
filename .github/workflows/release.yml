@@ -51,10 +51,6 @@ jobs:
           p12-file-base64: ${{ secrets.MACOS_CERT_BASE64 }}
           p12-password: ${{ secrets.MACOS_CERT_PASSWORD }}
 
-      - name: Update marketing version from tag
-        run: |
-          # Update marketing version in project settings
-          /usr/libexec/PlistBuddy -c "Set :objects:$(plutil -extract objects json Annotate.xcodeproj/project.pbxproj | jq -r 'to_entries[] | select(.value.isa == "XCBuildConfiguration" and (.value.name == "Release" or .value.name == "Debug")) | .key' | head -1):buildSettings:MARKETING_VERSION ${{ steps.version.outputs.semver }}" Annotate.xcodeproj/project.pbxproj || true
 
       - name: Install xcpretty
         run: gem install xcpretty --no-document
@@ -72,6 +68,7 @@ jobs:
             -destination "generic/platform=macOS" \
             ARCHS=arm64 \
             CODE_SIGNING_ALLOWED=NO \
+            MARKETING_VERSION=${{ steps.version.outputs.semver }} \
             clean archive | xcpretty && exit ${PIPESTATUS[0]}
 
       - name: Export signed app (Developer ID)
