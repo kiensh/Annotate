@@ -3,11 +3,11 @@ import Cocoa
 import SwiftUI
 
 @MainActor
-class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverDelegate {
     static weak var shared: AppDelegate?
 
     var statusItem: NSStatusItem!
-    var colorPopover: NSPopover!
+    var colorPopover: NSPopover?
     var currentColor: NSColor = .systemRed
     var hotkeyMonitor: Any?
     var overlayWindows: [NSScreen: OverlayWindow] = [:]
@@ -260,17 +260,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     @objc func showColorPicker(_ sender: Any?) {
         if colorPopover == nil {
             colorPopover = NSPopover()
-            colorPopover.contentViewController = ColorPickerViewController()
-            colorPopover.behavior = .transient
+            colorPopover?.contentViewController = ColorPickerViewController()
+            colorPopover?.behavior = .transient
+            colorPopover?.delegate = self
         }
 
         if let button = statusItem.button {
-            colorPopover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            colorPopover?.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
 
-            if let popoverWindow = colorPopover.contentViewController?.view.window {
+            if let popoverWindow = colorPopover?.contentViewController?.view.window {
                 popoverWindow.level = .popUpMenu
             }
         }
+    }
+
+    func popoverWillClose(_ notification: Notification) {
+        colorPopover = nil
     }
 
     @objc func toggleOverlay() {
@@ -399,7 +404,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     @objc func toggleBoardVisibility(_ sender: Any?) {
         BoardManager.shared.toggle()
         updateBoardMenuItems()
-        showOverlay()
     }
 
     func updateBoardMenuItems() {
