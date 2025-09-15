@@ -4,24 +4,29 @@ import XCTest
 @testable import Annotate
 
 @MainActor
-final class AppDelegateTests: XCTestCase {
+final class AppDelegateTests: XCTestCase, Sendable {
     var appDelegate: AppDelegate!
 
-    override func setUp() {
+    nonisolated override func setUp() {
         super.setUp()
         UserDefaults.standard.removeObject(forKey: "SelectedColor")
-        appDelegate = AppDelegate()
-        appDelegate.applicationDidFinishLaunching(
-            Notification(name: NSApplication.didFinishLaunchingNotification))
         UserDefaults.standard.removeObject(forKey: UserDefaults.clearDrawingsOnStartKey)
+
+        MainActor.assumeIsolated {
+            appDelegate = AppDelegate()
+            appDelegate.applicationDidFinishLaunching(
+                Notification(name: NSApplication.didFinishLaunchingNotification))
+        }
     }
 
-    override func tearDown() {
+    nonisolated override func tearDown() {
         UserDefaults.standard.removeObject(forKey: UserDefaults.clearDrawingsOnStartKey)
         UserDefaults.standard.removeObject(forKey: UserDefaults.hideDockIconKey)
         UserDefaults.standard.removeObject(forKey: UserDefaults.fadeModeKey)
         UserDefaults.standard.removeObject(forKey: "SelectedColor")
-        appDelegate = nil
+        MainActor.assumeIsolated {
+            appDelegate = nil
+        }
         super.tearDown()
     }
 

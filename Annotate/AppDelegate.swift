@@ -42,12 +42,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
 
     @MainActor
     func updateDockIconVisibility() {
+        // Skip NSApplication operations during testing
+        guard NSApplication.shared.delegate != nil else { return }
+
         if UserDefaults.standard.bool(forKey: UserDefaults.hideDockIconKey) {
-            NSApp.setActivationPolicy(.accessory)
+            NSApplication.shared.setActivationPolicy(.accessory)
         } else {
-            NSApp.setActivationPolicy(.regular)
+            NSApplication.shared.setActivationPolicy(.regular)
         }
-        NSApp.activate(ignoringOtherApps: true)
+        NSApplication.shared.activate(ignoringOtherApps: true)
         settingsWindow?.makeKeyAndOrderFront(nil)
     }
 

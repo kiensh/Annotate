@@ -3,17 +3,20 @@ import XCTest
 @testable import Annotate
 
 @MainActor
-final class OverlayViewTests: XCTestCase {
-
+final class OverlayViewTests: XCTestCase, Sendable {
     var overlayView: OverlayView!
 
-    override func setUp() {
+    nonisolated override func setUp() {
         super.setUp()
-        overlayView = OverlayView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
+        MainActor.assumeIsolated {
+            overlayView = OverlayView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
+        }
     }
 
-    override func tearDown() {
-        overlayView = nil
+    nonisolated override func tearDown() {
+        MainActor.assumeIsolated {
+            overlayView = nil
+        }
         super.tearDown()
     }
 
