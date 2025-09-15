@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Build and Test
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode 16.2
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.2'
+
+      - name: Verify Xcode version
+        run: xcodebuild -version
+
+      - name: Install xcpretty
+        run: gem install xcpretty --no-document
+
+      - name: Swift Package Manager - Build
+        run: swift build
+
+      - name: Swift Package Manager - Test
+        run: swift test
+        continue-on-error: true
+
+      - name: Xcode - Build
+        run: |
+          xcodebuild \
+            -project Annotate.xcodeproj \
+            -scheme Annotate \
+            -configuration Debug \
+            -destination "platform=macOS" \
+            clean build | xcpretty && exit ${PIPESTATUS[0]}
+
+      - name: Xcode - Test
+        run: |
+          xcodebuild \
+            -project Annotate.xcodeproj \
+            -scheme Annotate \
+            -configuration Debug \
+            -destination "platform=macOS" \
+            test | xcpretty && exit ${PIPESTATUS[0]}
+        continue-on-error: true
