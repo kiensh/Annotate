@@ -2,6 +2,7 @@ import XCTest
 
 @testable import Annotate
 
+@MainActor
 final class NSColorExtensionsTests: XCTestCase {
 
     // Test that dark colors return white as the contrasting color

@@ -2,6 +2,7 @@ import XCTest
 
 @testable import Annotate
 
+@MainActor
 final class NSImageExtensionsTests: XCTestCase {
     func testCompositeImage() {
         // Create test images

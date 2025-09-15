@@ -2,6 +2,7 @@ import XCTest
 
 @testable import Annotate
 
+@MainActor
 final class ColorPickerViewControllerTests: XCTestCase {
     var colorPicker: ColorPickerViewController!
     var mockAppDelegate: MockAppDelegate!

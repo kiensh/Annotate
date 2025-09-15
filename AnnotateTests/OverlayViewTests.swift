@@ -2,6 +2,7 @@ import XCTest
 
 @testable import Annotate
 
+@MainActor
 final class OverlayViewTests: XCTestCase {
 
     var overlayView: OverlayView!

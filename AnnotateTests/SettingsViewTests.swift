@@ -3,6 +3,7 @@ import XCTest
 
 @testable import Annotate
 
+@MainActor
 final class SettingsViewTests: XCTestCase {
 
     override func setUp() {
@@ -52,6 +53,7 @@ final class SettingsViewTests: XCTestCase {
         class ViewModel: ObservableObject {
             @AppStorage(UserDefaults.hideDockIconKey) var hideDockIcon = false
 
+            @MainActor
             func toggleHideDockIcon() {
                 hideDockIcon.toggle()
                 AppDelegate.shared?.updateDockIconVisibility()
@@ -68,6 +70,7 @@ final class SettingsViewTests: XCTestCase {
     }
 }
 
+@MainActor
 class AppDelegateSpy: AppDelegate {
     var updateDockIconVisibilityCalled = false
 

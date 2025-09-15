@@ -3,11 +3,13 @@ import XCTest
 
 @testable import Annotate
 
+@MainActor
 final class AppDelegateTests: XCTestCase {
     var appDelegate: AppDelegate!
 
     override func setUp() {
         super.setUp()
+        UserDefaults.standard.removeObject(forKey: "SelectedColor")
         appDelegate = AppDelegate()
         appDelegate.applicationDidFinishLaunching(
             Notification(name: NSApplication.didFinishLaunchingNotification))
@@ -18,6 +20,7 @@ final class AppDelegateTests: XCTestCase {
         UserDefaults.standard.removeObject(forKey: UserDefaults.clearDrawingsOnStartKey)
         UserDefaults.standard.removeObject(forKey: UserDefaults.hideDockIconKey)
         UserDefaults.standard.removeObject(forKey: UserDefaults.fadeModeKey)
+        UserDefaults.standard.removeObject(forKey: "SelectedColor")
         appDelegate = nil
         super.tearDown()
     }
@@ -95,7 +98,7 @@ final class AppDelegateTests: XCTestCase {
     func testColorPicker() {
         appDelegate.showColorPicker(nil)
         XCTAssertNotNil(appDelegate.colorPopover)
-        XCTAssertTrue(appDelegate.colorPopover.isShown)
+        XCTAssertTrue(appDelegate.colorPopover?.isShown ?? false)
     }
 
     // MARK: - Clear Drawings Tests
