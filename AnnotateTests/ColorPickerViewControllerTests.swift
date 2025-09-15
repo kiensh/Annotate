@@ -3,24 +3,27 @@ import XCTest
 @testable import Annotate
 
 @MainActor
-final class ColorPickerViewControllerTests: XCTestCase {
+final class ColorPickerViewControllerTests: XCTestCase, Sendable {
     var colorPicker: ColorPickerViewController!
     var mockAppDelegate: MockAppDelegate!
 
-    override func setUp() {
+    nonisolated override func setUp() {
         super.setUp()
-        colorPicker = ColorPickerViewController()
-        mockAppDelegate = MockAppDelegate()
-        AppDelegate.shared = mockAppDelegate
+        MainActor.assumeIsolated {
+            colorPicker = ColorPickerViewController()
+            mockAppDelegate = MockAppDelegate()
+            AppDelegate.shared = mockAppDelegate
 
-        // Load view to trigger viewDidLoad
-        _ = colorPicker.view
+            _ = colorPicker.view
+        }
     }
 
-    override func tearDown() {
-        colorPicker = nil
-        mockAppDelegate = nil
-        AppDelegate.shared = nil
+    nonisolated override func tearDown() {
+        MainActor.assumeIsolated {
+            colorPicker = nil
+            mockAppDelegate = nil
+            AppDelegate.shared = nil
+        }
         super.tearDown()
     }
 

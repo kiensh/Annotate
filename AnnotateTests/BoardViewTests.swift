@@ -3,16 +3,20 @@ import XCTest
 @testable import Annotate
 
 @MainActor
-final class BoardViewTests: XCTestCase {
+final class BoardViewTests: XCTestCase, Sendable {
     var boardView: BoardView!
 
-    override func setUp() {
+    nonisolated override func setUp() {
         super.setUp()
-        boardView = BoardView(frame: NSRect(x: 0, y: 0, width: 500, height: 500))
+        MainActor.assumeIsolated {
+            boardView = BoardView(frame: NSRect(x: 0, y: 0, width: 500, height: 500))
+        }
     }
 
-    override func tearDown() {
-        boardView = nil
+    nonisolated override func tearDown() {
+        MainActor.assumeIsolated {
+            boardView = nil
+        }
         super.tearDown()
     }
 

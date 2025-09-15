@@ -3,22 +3,26 @@ import XCTest
 @testable import Annotate
 
 @MainActor
-final class OverlayWindowTests: XCTestCase {
+final class OverlayWindowTests: XCTestCase, Sendable {
     var window: OverlayWindow!
 
-    override func setUp() {
+    nonisolated override func setUp() {
         super.setUp()
-        let frame = NSRect(x: 0, y: 0, width: 800, height: 600)
-        window = OverlayWindow(
-            contentRect: frame,
-            styleMask: .borderless,
-            backing: .buffered,
-            defer: false
-        )
+        MainActor.assumeIsolated {
+            let frame = NSRect(x: 0, y: 0, width: 800, height: 600)
+            window = OverlayWindow(
+                contentRect: frame,
+                styleMask: .borderless,
+                backing: .buffered,
+                defer: false
+            )
+        }
     }
 
-    override func tearDown() {
-        window = nil
+    nonisolated override func tearDown() {
+        MainActor.assumeIsolated {
+            window = nil
+        }
         super.tearDown()
     }
 

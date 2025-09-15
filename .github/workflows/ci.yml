@@ -31,7 +31,6 @@ jobs:
 
       - name: Swift Package Manager - Test
         run: swift test
-        continue-on-error: true
 
       - name: Xcode - Build
         run: |
@@ -50,4 +49,3 @@ jobs:
             -configuration Debug \
             -destination "platform=macOS" \
             test | xcpretty && exit ${PIPESTATUS[0]}
-        continue-on-error: true

@@ -3,16 +3,15 @@ import XCTest
 @testable import Annotate
 
 @MainActor
-final class ShortcutManagerTests: XCTestCase {
-
-    override func setUp() {
+final class ShortcutManagerTests: XCTestCase, Sendable {
+    nonisolated override func setUp() {
         super.setUp()
-        // Reset all shortcuts to their defaults before each test.
-        ShortcutManager.shared.resetAllToDefault()
+        MainActor.assumeIsolated {
+            ShortcutManager.shared.resetAllToDefault()
+        }
     }
 
     func testDefaultShortcuts() {
-        // Verify that every tool returns its default shortcut.
         for tool in ShortcutKey.allCases {
             XCTAssertEqual(
                 ShortcutManager.shared.getShortcut(for: tool), tool.defaultKey,
