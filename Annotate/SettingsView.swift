@@ -6,6 +6,8 @@ struct SettingsView: View {
     private var clearDrawingsOnStart = false
     @AppStorage(UserDefaults.hideDockIconKey)
     private var hideDockIcon = false
+    @AppStorage(UserDefaults.alwaysOnModeKey)
+    private var startInAlwaysOnMode = false
     @State private var shortcuts: [ShortcutKey: String] = ShortcutManager.shared.allShortcuts
     @State private var editingShortcut: ShortcutKey?
     @State private var boardOpacity: Double = BoardManager.shared.opacity
@@ -15,6 +17,8 @@ struct SettingsView: View {
             GroupBox("General") {
                 VStack(alignment: .center, spacing: 12) {
                     KeyboardShortcuts.Recorder("Annotate Hotkey:", name: .toggleOverlay)
+                    
+                    KeyboardShortcuts.Recorder("Always-On Mode:", name: .toggleAlwaysOnMode)
 
                     Divider()
 
@@ -30,6 +34,10 @@ struct SettingsView: View {
                         .onChange(of: hideDockIcon) {
                             AppDelegate.shared?.updateDockIconVisibility()
                         }
+                    
+                    Toggle("Start in Always-On Mode", isOn: $startInAlwaysOnMode)
+                        .toggleStyle(.checkbox)
+                        .help("When enabled, Annotate will start in always-on mode with persistent, read-only annotations")
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.horizontal, 8)

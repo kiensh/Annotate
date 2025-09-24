@@ -11,6 +11,7 @@ final class AppDelegateTests: XCTestCase, Sendable {
         super.setUp()
         UserDefaults.standard.removeObject(forKey: "SelectedColor")
         UserDefaults.standard.removeObject(forKey: UserDefaults.clearDrawingsOnStartKey)
+        UserDefaults.standard.removeObject(forKey: UserDefaults.alwaysOnModeKey)
 
         MainActor.assumeIsolated {
             appDelegate = AppDelegate()
@@ -23,6 +24,7 @@ final class AppDelegateTests: XCTestCase, Sendable {
         UserDefaults.standard.removeObject(forKey: UserDefaults.clearDrawingsOnStartKey)
         UserDefaults.standard.removeObject(forKey: UserDefaults.hideDockIconKey)
         UserDefaults.standard.removeObject(forKey: UserDefaults.fadeModeKey)
+        UserDefaults.standard.removeObject(forKey: UserDefaults.alwaysOnModeKey)
         UserDefaults.standard.removeObject(forKey: "SelectedColor")
         MainActor.assumeIsolated {
             appDelegate = nil
@@ -110,6 +112,11 @@ final class AppDelegateTests: XCTestCase, Sendable {
 
     func testToggleOverlayClearsDrawingsWhenEnabled() {
         UserDefaults.standard.set(true, forKey: UserDefaults.clearDrawingsOnStartKey)
+        appDelegate.alwaysOnMode = false  // Ensure we're not in always-on mode
+        
+        // Verify the setting is correctly set
+        XCTAssertTrue(UserDefaults.standard.bool(forKey: UserDefaults.clearDrawingsOnStartKey))
+        
         guard let currentScreen = NSScreen.main,
             let overlayWindow = appDelegate.overlayWindows[currentScreen]
         else {
@@ -133,10 +140,8 @@ final class AppDelegateTests: XCTestCase, Sendable {
         XCTAssertEqual(overlayWindow.overlayView.arrows.count, 1)
         XCTAssertEqual(overlayWindow.overlayView.lines.count, 1)
 
-        // Toggle overlay
+        // Toggle overlay off then on
         appDelegate.toggleOverlay()
-
-        // Toggle it back on
         appDelegate.toggleOverlay()
 
         // Verify drawings were cleared
