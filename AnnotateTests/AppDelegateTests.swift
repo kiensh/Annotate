@@ -112,9 +112,8 @@ final class AppDelegateTests: XCTestCase, Sendable {
 
     func testToggleOverlayClearsDrawingsWhenEnabled() {
         UserDefaults.standard.set(true, forKey: UserDefaults.clearDrawingsOnStartKey)
-        appDelegate.alwaysOnMode = false  // Ensure we're not in always-on mode
+        appDelegate.alwaysOnMode = false
         
-        // Verify the setting is correctly set
         XCTAssertTrue(UserDefaults.standard.bool(forKey: UserDefaults.clearDrawingsOnStartKey))
         
         guard let currentScreen = NSScreen.main,
@@ -140,11 +139,10 @@ final class AppDelegateTests: XCTestCase, Sendable {
         XCTAssertEqual(overlayWindow.overlayView.arrows.count, 1)
         XCTAssertEqual(overlayWindow.overlayView.lines.count, 1)
 
-        // Toggle overlay off then on
         appDelegate.toggleOverlay()
         appDelegate.toggleOverlay()
 
-        // Verify drawings were cleared
+        // Drawings should be cleared due to clearDrawingsOnStart setting
         XCTAssertEqual(overlayWindow.overlayView.paths.count, 0)
         XCTAssertEqual(overlayWindow.overlayView.arrows.count, 0)
         XCTAssertEqual(overlayWindow.overlayView.lines.count, 0)
