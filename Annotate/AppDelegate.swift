@@ -159,28 +159,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             menu.addItem(toggleBoardItem)
 
             menu.addItem(NSMenuItem.separator())
-            
-            let currentOverlayModeItem = NSMenuItem(
-                title: alwaysOnMode ? "Current Mode: Always-On" : "Current Mode: Normal",
-                action: nil,
-                keyEquivalent: ""
-            )
-            currentOverlayModeItem.isEnabled = false
-            menu.addItem(currentOverlayModeItem)
-            
-            let toggleAlwaysOnModeItem = NSMenuItem(
-                title: alwaysOnMode ? "Exit Always-On Mode" : "Always-On Mode",
-                action: #selector(toggleAlwaysOnMode),
-                keyEquivalent: ""
-            )
-            menu.addItem(toggleAlwaysOnModeItem)
-
-            menu.addItem(NSMenuItem.separator())
 
             let persistedFadeMode =
                 UserDefaults.standard.object(forKey: UserDefaults.fadeModeKey) as? Bool ?? true
             let currentDrawingModeItem = NSMenuItem(
-                title: persistedFadeMode ? "Current Mode: Fade" : "Current Mode: Persist",
+                title: persistedFadeMode ? "Drawing Mode: Fade" : "Drawing Mode: Persist",
                 action: nil,
                 keyEquivalent: ""
             )
@@ -194,6 +177,23 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             )
             toggleDrawingModeItem.keyEquivalentModifierMask = []
             menu.addItem(toggleDrawingModeItem)
+
+            menu.addItem(NSMenuItem.separator())
+            
+            let currentOverlayModeItem = NSMenuItem(
+                title: alwaysOnMode ? "Overlay Mode: Always-On" : "Overlay Mode: Interactive",
+                action: nil,
+                keyEquivalent: ""
+            )
+            currentOverlayModeItem.isEnabled = false
+            menu.addItem(currentOverlayModeItem)
+            
+            let toggleAlwaysOnModeItem = NSMenuItem(
+                title: alwaysOnMode ? "Exit Always-On Mode" : "Always-On Mode",
+                action: #selector(toggleAlwaysOnMode),
+                keyEquivalent: ""
+            )
+            menu.addItem(toggleAlwaysOnModeItem)
 
             menu.addItem(NSMenuItem.separator())
 
@@ -503,10 +503,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
         
         // Update the current mode indicator
         let currentOverlayModeItem = menu.items.first { 
-            $0.title.hasPrefix("Current Mode:") && ($0.title.contains("Always-On") || $0.title.contains("Normal"))
+            $0.title.hasPrefix("Overlay Mode:") && ($0.title.contains("Always-On") || $0.title.contains("Interactive"))
         }
         if let item = currentOverlayModeItem {
-            item.title = alwaysOnMode ? "Current Mode: Always-On" : "Current Mode: Normal"
+            item.title = alwaysOnMode ? "Overlay Mode: Always-On" : "Overlay Mode: Interactive"
         }
         
         // Update the toggle menu item
@@ -594,14 +594,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
         if let menu = statusItem.menu {
             // Find the current drawing mode item by title prefix
             let currentDrawingModeItem = menu.items.first { 
-                $0.title.hasPrefix("Current Mode:") && ($0.title.contains("Fade") || $0.title.contains("Persist"))
+                $0.title.hasPrefix("Drawing Mode:") && ($0.title.contains("Fade") || $0.title.contains("Persist"))
             }
             let toggleDrawingModeItem = menu.items.first { $0.action == #selector(toggleFadeMode(_:)) }
 
             currentDrawingModeItem?.title =
                 isCurrentlyFadeMode
-                ? "Current Mode: Persist"
-                : "Current Mode: Fade"
+                ? "Drawing Mode: Persist"
+                : "Drawing Mode: Fade"
 
             toggleDrawingModeItem?.title =
                 isCurrentlyFadeMode
