@@ -93,27 +93,28 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 
 ### Keyboard Shortcuts
 
-| Action                | Default Hotkey                                       | Description                                                     |
-| --------------------- | ---------------------------------------------------- | --------------------------------------------------------------- |
-| **Toggle Overlay**    | Custom (Settings)                                    | Show or hide the annotation overlay.                            |
-| **Always-On Mode**    | Custom (Settings)                                    | Toggle always-on mode for persistent, non-interactive display.  |
-| **Close Overlay**     | <kbd>Command</kbd> + <kbd>W</kbd> or <kbd>Esc</kbd>  | Closes the annotation overlay.                                  |
-| **Open Color Picker** | <kbd>c</kbd>                                         | Open the color selection menu for tools.                        |
-| **Pen Mode**          | <kbd>p</kbd>                                         | Draw freehand lines.                                            |
-| **Arrow Mode**        | <kbd>a</kbd>                                         | Draw arrows.                                                    |
-| **Line Mode**         | <kbd>l</kbd>                                         | Draw straight lines.                                            |
-| **Highlighter Mode**  | <kbd>h</kbd>                                         | Highlight areas with a soft brush.                              |
-| **Rectangle Mode**    | <kbd>r</kbd>                                         | Draw rectangles (hold <kbd>Option</kbd> to expand from center). |
-| **Circle Mode**       | <kbd>o</kbd>                                         | Draw circles (hold <kbd>Option</kbd> to expand from center).    |
-| **Text Mode**         | <kbd>t</kbd>                                         | Add text annotations.                                           |
-| **Counter Mode**      | <kbd>n</kbd>                                         | Add sequential numbered circles.                                |
-| **Toggle Board**      | <kbd>b</kbd>                                         | Toggle whiteboard/blackboard.                                   |
-| **Finalize Text**     | <kbd>Enter</kbd> or <kbd>Esc</kbd>                   | Finalize text input (empty text removes it).                    |
-| **Toggle Fade Mode**  | <kbd>Space</kbd>                                     | Switch between fade and persist modes.                          |
-| **Delete Last**       | <kbd>Delete</kbd>                                    | Remove the most recent annotation.                              |
-| **Clear All**         | <kbd>Option</kbd> + <kbd>Delete</kbd>                | Remove all annotations from the overlay.                        |
-| **Undo**              | <kbd>Command</kbd> + <kbd>Z</kbd>                    | Undo the last action.                                           |
-| **Redo**              | <kbd>Command</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd> | Redo the last undone action.                                    |
+| Action                      | Default Hotkey                                       | Description                                                     |
+| --------------------------- | ---------------------------------------------------- | --------------------------------------------------------------- |
+| **Toggle Overlay**          | Custom (Settings)                                    | Show or hide the annotation overlay.                            |
+| **Always-On Mode**          | Custom (Settings)                                    | Toggle always-on mode for persistent, non-interactive display.  |
+| **Close Overlay**           | <kbd>Command</kbd> + <kbd>W</kbd> or <kbd>Esc</kbd>  | Closes the annotation overlay.                                  |
+| **Interactive → Always-On** | <kbd>Shift</kbd> + <kbd>Esc</kbd>                    | Close interactive overlay and enable always-on mode.            |
+| **Open Color Picker**       | <kbd>c</kbd>                                         | Open the color selection menu for tools.                        |
+| **Pen Mode**                | <kbd>p</kbd>                                         | Draw freehand lines.                                            |
+| **Arrow Mode**              | <kbd>a</kbd>                                         | Draw arrows.                                                    |
+| **Line Mode**               | <kbd>l</kbd>                                         | Draw straight lines.                                            |
+| **Highlighter Mode**        | <kbd>h</kbd>                                         | Highlight areas with a soft brush.                              |
+| **Rectangle Mode**          | <kbd>r</kbd>                                         | Draw rectangles (hold <kbd>Option</kbd> to expand from center). |
+| **Circle Mode**             | <kbd>o</kbd>                                         | Draw circles (hold <kbd>Option</kbd> to expand from center).    |
+| **Text Mode**               | <kbd>t</kbd>                                         | Add text annotations.                                           |
+| **Counter Mode**            | <kbd>n</kbd>                                         | Add sequential numbered circles.                                |
+| **Toggle Board**            | <kbd>b</kbd>                                         | Toggle whiteboard/blackboard.                                   |
+| **Finalize Text**           | <kbd>Enter</kbd> or <kbd>Esc</kbd>                   | Finalize text input (empty text removes it).                    |
+| **Toggle Fade Mode**        | <kbd>Space</kbd>                                     | Switch between fade and persist modes.                          |
+| **Delete Last**             | <kbd>Delete</kbd>                                    | Remove the most recent annotation.                              |
+| **Clear All**               | <kbd>Option</kbd> + <kbd>Delete</kbd>                | Remove all annotations from the overlay.                        |
+| **Undo**                    | <kbd>Command</kbd> + <kbd>Z</kbd>                    | Undo the last action.                                           |
+| **Redo**                    | <kbd>Command</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd> | Redo the last undone action.                                    |
 
 > [!TIP]
 > All tool shortcuts can be customized in Settings.
@@ -165,6 +166,7 @@ In persist mode, annotations remain on screen until manually cleared, allowing y
 Always-On Mode displays your annotations persistently without any user interaction capability. This mode is ideal for presentations where you need important information visible without accidental modifications, reference displays with static guides or markers, and multi-screen setups where annotations remain on secondary monitors.
 
 #### How to use:
+
 1. Create your annotations in normal interactive mode
 2. Toggle always-on mode via the global hotkey (configurable in Settings) or menu bar
 3. Annotations become persistent and non-interactive

@@ -369,6 +369,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             overlayWindow.orderOut(nil)
         }
     }
+    
+    @objc func closeOverlayAndEnableAlwaysOn() {
+        // Transition directly to always-on mode to preserve annotations (avoids hiding overlay first)
+        if !alwaysOnMode {
+            toggleAlwaysOnMode()
+        }
+    }
 
     @objc func showOverlay() {
         if let currentScreen = getCurrentScreen(),
