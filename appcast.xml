@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <channel>
+        <title>Annotate Changelog</title>
+        <link>https://github.com/epilande/Annotate</link>
+        <description>Annotate App Updates</description>
+        <language>en</language>
+        
+        <!-- TEST ENTRY for local development -->
+        <item>
+            <title>Version 1.0.6 - Test Update</title>
+            <link>https://github.com/epilande/Annotate/releases/tag/v1.0.6</link>
+            <sparkle:releaseNotesLink>https://github.com/epilande/Annotate/releases/tag/v1.0.6</sparkle:releaseNotesLink>
+            <description><![CDATA[
+                <h2>🎉 Test Update v1.0.6</h2>
+                <ul>
+                    <li>🔄 Auto-update functionality added</li>
+                    <li>🎯 Enhanced drawing tools</li>
+                    <li>🚀 Performance improvements</li>
+                    <li>🐛 Bug fixes and stability improvements</li>
+                </ul>
+                <p><strong>This is a test update to verify Sparkle integration!</strong></p>
+            ]]></description>
+            <pubDate>Wed, 25 Sep 2024 12:00:00 +0000</pubDate>
+            <enclosure url="https://github.com/epilande/Annotate/releases/download/v1.0.6/Annotate.dmg"
+                       sparkle:version="2"
+                       sparkle:shortVersionString="1.0.6"
+                       length="12345678"
+                       type="application/octet-stream" />
+        </item>
+        
+        <!-- Release entries will be automatically added by CI/CD pipeline -->
+        
+    </channel>
+</rss>

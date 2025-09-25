@@ -12,6 +12,7 @@ targets:
       - Annotate
     dependencies:
       - package: KeyboardShortcuts
+      - package: Sparkle
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.epilande.Annotate
@@ -21,6 +22,14 @@ targets:
         SWIFT_VERSION: "5.0"
         MACOSX_DEPLOYMENT_TARGET: "15.2"
         INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.productivity"
+        INFOPLIST_KEY_SUFeedURL: "https://raw.githubusercontent.com/epilande/Annotate/auto-update/appcast.xml"
+        INFOPLIST_KEY_SUPublicEDKey: "KxIw4U6lMckcUyTYidHU2jbo0VtFgDd1VrMsYpB9GXY="
+        INFOPLIST_KEY_SUEnableAutomaticChecks: true
+        INFOPLIST_KEY_SUScheduledCheckInterval: 86400
+        INFOPLIST_KEY_SUAllowsAutomaticUpdates: false
+        INFOPLIST_KEY_SUEnableSystemProfiling: false
+        INFOPLIST_KEY_SUEnableInstallerLauncherService: true
+        INFOPLIST_KEY_SUEnableDownloaderService: false
         ENABLE_HARDENED_RUNTIME: true
         COMBINE_HIDPI_IMAGES: true
         GENERATE_INFOPLIST_FILE: true
@@ -39,3 +48,6 @@ packages:
   KeyboardShortcuts:
     url: https://github.com/sindresorhus/KeyboardShortcuts
     from: "2.2.4"
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.0.0"

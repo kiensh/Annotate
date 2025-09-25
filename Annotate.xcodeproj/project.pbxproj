@@ -12,6 +12,7 @@
 		175889B3CA729724FB6707D7 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6903AD70B770B730044017F1 /* SettingsView.swift */; };
 		1EFDEFDAAF15DD6A34D8CF1E /* NSImageExtensionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946F5E92DE3DAF1A47E3F28E /* NSImageExtensionsTests.swift */; };
 		1F730C2DD22A0251DAB56212 /* BoardManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9665DE19443CE9027FF350BB /* BoardManagerTests.swift */; };
+		2CFD7491DD5352320F7767AB /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 7704D9C65541985A7C2DE0C8 /* Sparkle */; };
 		331BE777AFFF47624DD2C0C4 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81E3F850F2E321AD0BAEF3A0 /* Models.swift */; };
 		34ED549A54B74AB82408795F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FFDF41C9B21C6AFA821B267 /* AppDelegate.swift */; };
 		419164A32BDCBD498FDBFE27 /* AnnotateApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C61EAA8724E674065B5FD4D /* AnnotateApp.swift */; };
@@ -94,6 +95,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				41A4E57EEF321CFF0D63C550 /* KeyboardShortcuts in Frameworks */,
+				2CFD7491DD5352320F7767AB /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -208,6 +210,7 @@
 			name = Annotate;
 			packageProductDependencies = (
 				F4667888F6F43B3275FE6649 /* KeyboardShortcuts */,
+				7704D9C65541985A7C2DE0C8 /* Sparkle */,
 			);
 			productName = Annotate;
 			productReference = 1A86FAB9A203FD40B297E4B2 /* Annotate.app */;
@@ -234,6 +237,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				D2280A2633CAC57465095EE6 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
+				4867C6813A8374A18468B8B9 /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
@@ -341,6 +345,14 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_SUAllowsAutomaticUpdates = NO;
+				INFOPLIST_KEY_SUEnableAutomaticChecks = YES;
+				INFOPLIST_KEY_SUEnableDownloaderService = NO;
+				INFOPLIST_KEY_SUEnableInstallerLauncherService = YES;
+				INFOPLIST_KEY_SUEnableSystemProfiling = NO;
+				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/epilande/Annotate/auto-update/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = "KxIw4U6lMckcUyTYidHU2jbo0VtFgDd1VrMsYpB9GXY=";
+				INFOPLIST_KEY_SUScheduledCheckInterval = 86400;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -501,6 +513,14 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_SUAllowsAutomaticUpdates = NO;
+				INFOPLIST_KEY_SUEnableAutomaticChecks = YES;
+				INFOPLIST_KEY_SUEnableDownloaderService = NO;
+				INFOPLIST_KEY_SUEnableInstallerLauncherService = YES;
+				INFOPLIST_KEY_SUEnableSystemProfiling = NO;
+				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/epilande/Annotate/auto-update/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = "KxIw4U6lMckcUyTYidHU2jbo0VtFgDd1VrMsYpB9GXY=";
+				INFOPLIST_KEY_SUScheduledCheckInterval = 86400;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -546,6 +566,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		4867C6813A8374A18468B8B9 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
 		D2280A2633CAC57465095EE6 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts";
@@ -557,6 +585,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		7704D9C65541985A7C2DE0C8 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4867C6813A8374A18468B8B9 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
 		F4667888F6F43B3275FE6649 /* KeyboardShortcuts */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = D2280A2633CAC57465095EE6 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
