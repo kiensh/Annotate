@@ -17,17 +17,23 @@ TEAM_ID="$3"
 APP_NAME="Annotate"
 ARCHIVE_PATH="Annotate.xcarchive"
 EXPORT_DIR="build/export"
-UNSIGNED_EXPORT_PLIST="packaging/UnsignedExportOptions.plist"
+EXPORT_PLIST="packaging/ExportOptions.plist"
+TEMP_EXPORT_PLIST="/tmp/ExportOptions.plist"
 
-echo "🔐 Exporting unsigned app..."
+echo "🔐 Preparing export options with Team ID..."
+
+# Substitute the TEAM_ID placeholder in the export plist
+sed "s/__TEAM_ID__/$TEAM_ID/g" "$EXPORT_PLIST" > "$TEMP_EXPORT_PLIST"
+
+echo "🔐 Exporting signed app..."
 
 mkdir -p "$EXPORT_DIR"
 xcodebuild -exportArchive \
     -archivePath "$ARCHIVE_PATH" \
     -exportPath "$EXPORT_DIR" \
-    -exportOptionsPlist "$UNSIGNED_EXPORT_PLIST" | xcpretty && exit ${PIPESTATUS[0]}
+    -exportOptionsPlist "$TEMP_EXPORT_PLIST" | xcpretty && exit ${PIPESTATUS[0]}
 
-echo "🔒 Signing with hardened runtime..."
+echo "🔒 Re-signing with hardened runtime..."
 
 codesign --force --sign "Developer ID Application" \
     -o runtime --timestamp \
@@ -60,3 +66,6 @@ xcrun stapler validate "$DMG_PATH"
 
 echo "✅ Notarization complete: $DMG_PATH"
 echo "DMG_PATH=$DMG_PATH" >> "${GITHUB_OUTPUT:-/dev/null}"
+
+# Clean up temporary file
+rm -f "$TEMP_EXPORT_PLIST"

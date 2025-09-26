@@ -28,6 +28,7 @@ xcodebuild \
     -destination "generic/platform=macOS" \
     ARCHS=arm64 \
     CODE_SIGNING_ALLOWED=NO \
+    SKIP_INSTALL=NO \
     MARKETING_VERSION="$MARKETING_VERSION" \
     clean archive | xcpretty && exit ${PIPESTATUS[0]}
 
