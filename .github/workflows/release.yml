@@ -70,13 +70,12 @@ jobs:
           ls -la build/ || echo "No build directory found"
           echo "Looking for .xcarchive files:"
           find . -name "*.xcarchive" -type d
-
-      - name: Inject TEAM_ID into ExportOptions
-        run: |
-          sed "s/__TEAM_ID__/${{ secrets.TEAM_ID }}/" \
-            "packaging/ExportOptions.plist" > \
-            "packaging/ExportOptions.plist.out"
-          mv "packaging/ExportOptions.plist.out" "packaging/ExportOptions.plist"
+          echo "Archive contents:"
+          ls -la Annotate.xcarchive/
+          echo "Products in archive:"
+          ls -la Annotate.xcarchive/Products/ || echo "No Products directory"
+          echo "Applications in archive:"
+          ls -la Annotate.xcarchive/Products/Applications/ || echo "No Applications directory"
 
       - name: Import Developer ID certificate
         uses: apple-actions/import-codesign-certs@v5

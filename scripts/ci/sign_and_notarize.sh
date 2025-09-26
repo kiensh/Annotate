@@ -17,17 +17,17 @@ TEAM_ID="$3"
 APP_NAME="Annotate"
 ARCHIVE_PATH="Annotate.xcarchive"
 EXPORT_DIR="build/export"
-EXPORT_PLIST="packaging/ExportOptions.plist"
+UNSIGNED_EXPORT_PLIST="packaging/UnsignedExportOptions.plist"
 
-echo "🔐 Exporting signed app..."
+echo "🔐 Exporting unsigned app..."
 
 mkdir -p "$EXPORT_DIR"
 xcodebuild -exportArchive \
     -archivePath "$ARCHIVE_PATH" \
     -exportPath "$EXPORT_DIR" \
-    -exportOptionsPlist "$EXPORT_PLIST" | xcpretty && exit ${PIPESTATUS[0]}
+    -exportOptionsPlist "$UNSIGNED_EXPORT_PLIST" | xcpretty && exit ${PIPESTATUS[0]}
 
-echo "🔒 Re-signing with hardened runtime..."
+echo "🔒 Signing with hardened runtime..."
 
 codesign --force --sign "Developer ID Application" \
     -o runtime --timestamp \
