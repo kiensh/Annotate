@@ -321,7 +321,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -343,16 +343,9 @@
 				DEVELOPMENT_ASSET_PATHS = "\"Annotate/Preview Content\"";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				INFOPLIST_KEY_SUAllowsAutomaticUpdates = NO;
-				INFOPLIST_KEY_SUEnableAutomaticChecks = YES;
-				INFOPLIST_KEY_SUEnableDownloaderService = NO;
-				INFOPLIST_KEY_SUEnableInstallerLauncherService = YES;
-				INFOPLIST_KEY_SUEnableSystemProfiling = NO;
-				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/epilande/Annotate/auto-update/appcast.xml";
-				INFOPLIST_KEY_SUPublicEDKey = "KxIw4U6lMckcUyTYidHU2jbo0VtFgDd1VrMsYpB9GXY=";
-				INFOPLIST_KEY_SUScheduledCheckInterval = 86400;
+				"INFOPLIST_FILE[sdk=macosx*]" = Annotate/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -370,7 +363,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -511,16 +504,9 @@
 				DEVELOPMENT_ASSET_PATHS = "\"Annotate/Preview Content\"";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				INFOPLIST_KEY_SUAllowsAutomaticUpdates = NO;
-				INFOPLIST_KEY_SUEnableAutomaticChecks = YES;
-				INFOPLIST_KEY_SUEnableDownloaderService = NO;
-				INFOPLIST_KEY_SUEnableInstallerLauncherService = YES;
-				INFOPLIST_KEY_SUEnableSystemProfiling = NO;
-				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/epilande/Annotate/auto-update/appcast.xml";
-				INFOPLIST_KEY_SUPublicEDKey = "KxIw4U6lMckcUyTYidHU2jbo0VtFgDd1VrMsYpB9GXY=";
-				INFOPLIST_KEY_SUScheduledCheckInterval = 86400;
+				"INFOPLIST_FILE[sdk=macosx*]" = Annotate/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

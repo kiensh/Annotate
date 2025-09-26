@@ -1,9 +1,8 @@
 name: Release (macOS)
 
 on:
-  push:
-    tags:
-      - "v*"
+  release:
+    types: [published]
 
 permissions:
   contents: write
@@ -33,12 +32,6 @@ jobs:
       - name: Verify Xcode version
         run: xcodebuild -version
 
-      - name: Resolve tag version
-        id: version
-        run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "semver=${TAG#v}" >> "$GITHUB_OUTPUT"
 
       - name: Inject TEAM_ID into ExportOptions
         run: |
@@ -68,7 +61,7 @@ jobs:
             -destination "generic/platform=macOS" \
             ARCHS=arm64 \
             CODE_SIGNING_ALLOWED=NO \
-            MARKETING_VERSION=${{ steps.version.outputs.semver }} \
+            MARKETING_VERSION=${{ github.event.release.tag_name }} \
             clean archive | xcpretty && exit ${PIPESTATUS[0]}
 
       - name: Export signed app (Developer ID)
@@ -131,63 +124,83 @@ jobs:
           BUNDLE_VERSION=$(defaults read "$EXPORT_DIR/$APP_NAME.app/Contents/Info.plist" CFBundleVersion)
           echo "bundle_version=$BUNDLE_VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Create GitHub Release & upload DMG
+      - name: Prepare release body
+        id: release_notes
+        run: |
+          # Use the actual release description from the GitHub event
+          RELEASE_BODY="${{ github.event.release.body }}"
+          
+          # Extract semantic version (remove 'v' prefix if present)
+          TAG_NAME="${{ github.event.release.tag_name }}"
+          SEMVER="${TAG_NAME#v}"
+          echo "semantic_version=$SEMVER" >> "$GITHUB_OUTPUT"
+          
+          # Check if this is a prerelease
+          IS_PRERELEASE="${{ github.event.release.prerelease }}"
+          echo "is_prerelease=$IS_PRERELEASE" >> "$GITHUB_OUTPUT"
+          
+          # Fallback if release body is empty
+          if [ -z "$RELEASE_BODY" ]; then
+            RELEASE_BODY="## 🚀 Annotate ${{ github.event.release.tag_name }}
+
+Enhanced drawing tools, performance improvements, and bug fixes."
+          fi
+          
+          # Store in output for appcast
+          echo "release_body<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$RELEASE_BODY" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Upload DMG to existing release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: "Annotate ${{ github.ref_name }}"
-          draft: false
-          prerelease: false
+          tag_name: ${{ github.event.release.tag_name }}
           files: |
             ${{ env.DMG_PATH }}
-          body: |
-            ## 🚀 Annotate ${{ steps.version.outputs.semver }}
-            
-            Enhanced drawing tools, performance improvements, and bug fixes.
-            
-            ### 📦 Installation
-            1. Download the DMG file below
-            2. Open the DMG and drag Annotate to Applications
-            3. Launch Annotate from Applications folder
-            
-            ### 🔄 Auto-Updates  
-            This version includes automatic update checking via Sparkle framework.
-            
-            **Full Changelog**: https://github.com/epilande/Annotate/compare/v1.0.0...${{ github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+
       - name: Update appcast.xml  
+        if: ${{ steps.release_notes.outputs.is_prerelease == 'false' }}
         run: |
           cat > new_entry.xml << EOF
           <item>
-              <title>Version ${{ steps.version.outputs.semver }}</title>
-              <link>https://github.com/epilande/Annotate/releases/tag/${{ github.ref_name }}</link>
-              <sparkle:releaseNotesLink>https://github.com/epilande/Annotate/releases/tag/${{ github.ref_name }}</sparkle:releaseNotesLink>
+              <title>Version ${{ github.event.release.tag_name }}</title>
+              <link>https://github.com/epilande/Annotate/releases/tag/${{ github.event.release.tag_name }}</link>
               <description><![CDATA[
-                  <h2>🚀 Annotate ${{ steps.version.outputs.semver }}</h2>
-                  <p>Enhanced drawing tools, performance improvements, and bug fixes.</p>
-                  <p><a href="https://github.com/epilande/Annotate/releases/tag/${{ github.ref_name }}">View full release notes on GitHub</a></p>
+${{ steps.release_notes.outputs.release_body }}
               ]]></description>
               <pubDate>$(date -R)</pubDate>
-              <enclosure url="https://github.com/epilande/Annotate/releases/download/${{ github.ref_name }}/$(basename "$DMG_PATH")"
+              <enclosure url="https://github.com/epilande/Annotate/releases/download/${{ github.event.release.tag_name }}/$(basename "$DMG_PATH")"
                          sparkle:version="${{ steps.appcast.outputs.bundle_version }}"
-                         sparkle:shortVersionString="${{ steps.version.outputs.semver }}"
+                         sparkle:shortVersionString="${{ steps.release_notes.outputs.semantic_version }}"
                          sparkle:edSignature="${{ steps.appcast.outputs.signature }}"
                          length="${{ steps.appcast.outputs.file_size }}"
                          type="application/octet-stream" />
           </item>
           EOF
           
+          echo "Generated appcast entry:"
+          cat new_entry.xml
+          
           # Insert new entry into appcast.xml after the channel description
-          sed -i.bak '/^        <\/description>$/r new_entry.xml' appcast.xml
+          sed -i.bak '/^        <description>.*<\/description>$/r new_entry.xml' appcast.xml
           rm new_entry.xml appcast.xml.bak
 
       - name: Commit updated appcast
+        if: ${{ steps.release_notes.outputs.is_prerelease == 'false' }}
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add appcast.xml
-          git commit -m "Update appcast.xml for ${{ github.ref_name }}"
+          git commit -m "Update appcast.xml for ${{ github.event.release.tag_name }}"
           git push origin HEAD:auto-update
+
+      - name: Skip appcast update (prerelease)
+        if: ${{ steps.release_notes.outputs.is_prerelease == 'true' }}
+        run: |
+          echo "⚠️  Skipping appcast update for prerelease ${{ github.event.release.tag_name }}"
+          echo "   Users will not be notified of this beta/RC version via auto-updates"
+
 
