@@ -1,25 +1,24 @@
+---
 name: Release (macOS)
 
-on:
+"on":
   release:
     types: [published]
 
 permissions:
   contents: write
 
+env:
+  APP_NAME: Annotate
+  SCHEME: Annotate
+
 jobs:
-  build-sign-notarize-release:
-    name: Build → Sign → Notarize → Release
+  build:
+    name: Build & Archive
     runs-on: macos-15
     environment: release
-    env:
-      APP_NAME: Annotate
-      SCHEME: Annotate
-      CONFIG: Release
-      ARCHIVE_PATH: build/Annotate.xcarchive
-      EXPORT_DIR: build/export
-      EXPORT_PLIST: packaging/ExportOptions.plist
-
+    outputs:
+      archive-path: ${{ steps.build.outputs.archive-path }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,15 +27,56 @@ jobs:
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: '16.2'
-          
-      - name: Verify Xcode version
-        run: xcodebuild -version
 
+      - name: Install xcpretty
+        run: gem install xcpretty --no-document
+
+      - name: Build and archive
+        id: build
+        run: |
+          ./scripts/ci/build_and_archive.sh \
+            "${{ github.event.release.tag_name }}"
+          echo "archive-path=build/Annotate.xcarchive" >> "$GITHUB_OUTPUT"
+
+      - name: Upload archive artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: archive
+          path: build/
+          retention-days: 1
+
+  sign-notarize:
+    name: Sign & Notarize
+    runs-on: macos-15
+    needs: build
+    environment: release
+    outputs:
+      dmg-path: ${{ steps.notarize.outputs.DMG_PATH }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download archive artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: archive
+          path: ./
+
+      - name: Debug - List downloaded files
+        run: |
+          echo "Current directory contents:"
+          ls -la
+          echo "Build directory contents:"
+          ls -la build/ || echo "No build directory found"
+          echo "Looking for .xcarchive files:"
+          find . -name "*.xcarchive" -type d
 
       - name: Inject TEAM_ID into ExportOptions
         run: |
-          sed "s/__TEAM_ID__/${{ secrets.TEAM_ID }}/" "$EXPORT_PLIST" > "$EXPORT_PLIST.out"
-          mv "$EXPORT_PLIST.out" "$EXPORT_PLIST"
+          sed "s/__TEAM_ID__/${{ secrets.TEAM_ID }}/" \
+            "packaging/ExportOptions.plist" > \
+            "packaging/ExportOptions.plist.out"
+          mv "packaging/ExportOptions.plist.out" "packaging/ExportOptions.plist"
 
       - name: Import Developer ID certificate
         uses: apple-actions/import-codesign-certs@v5
@@ -44,163 +84,94 @@ jobs:
           p12-file-base64: ${{ secrets.MACOS_CERT_BASE64 }}
           p12-password: ${{ secrets.MACOS_CERT_PASSWORD }}
 
-
-      - name: Install xcpretty
-        run: gem install xcpretty --no-document
-
-      - name: Xcode archive (arm64, verbose, unsigned)
+      - name: Sign and notarize
+        id: notarize
         run: |
-          set -euxo pipefail
-          mkdir -p build
-          ENTRY="-project Annotate.xcodeproj"
-          xcodebuild \
-            $ENTRY \
-            -scheme "$SCHEME" \
-            -configuration "$CONFIG" \
-            -archivePath "$ARCHIVE_PATH" \
-            -destination "generic/platform=macOS" \
-            ARCHS=arm64 \
-            CODE_SIGNING_ALLOWED=NO \
-            MARKETING_VERSION=${{ github.event.release.tag_name }} \
-            clean archive | xcpretty && exit ${PIPESTATUS[0]}
+          ./scripts/ci/sign_and_notarize.sh \
+            "${{ secrets.NOTARIZE_APPLE_ID }}" \
+            "${{ secrets.NOTARIZE_PASSWORD }}" \
+            "${{ secrets.TEAM_ID }}"
 
-      - name: Export signed app (Developer ID)
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dmg
+          path: ${{ steps.notarize.outputs.DMG_PATH }}
+          retention-days: 30
+
+  publish:
+    name: Publish & Update Appcast
+    runs-on: macos-15
+    needs: [build, sign-notarize]
+    environment: release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download DMG artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dmg
+          path: ./
+
+      - name: Download archive artifact (for bundle version)
+        uses: actions/download-artifact@v4
+        with:
+          name: archive
+          path: ./
+
+      - name: Prepare release metadata
+        id: release_notes
         run: |
-          mkdir -p "$EXPORT_DIR"
-          xcodebuild -exportArchive \
-            -archivePath "$ARCHIVE_PATH" \
-            -exportPath "$EXPORT_DIR" \
-            -exportOptionsPlist "$EXPORT_PLIST" | xcpretty && exit ${PIPESTATUS[0]}
-
-      - name: Re-sign with hardened runtime
-        run: |
-          codesign --force --sign "Developer ID Application" \
-            -o runtime --timestamp \
-            --entitlements "$APP_NAME/$APP_NAME.entitlements" \
-            "$EXPORT_DIR/$APP_NAME.app"
-
-      - name: Package DMG
-        run: |
-          chmod +x packaging/make_dmg.sh
-          DMG_PATH=$(./packaging/make_dmg.sh)
-          echo "DMG_PATH=$DMG_PATH" >> $GITHUB_ENV
-
-      - name: Notarize (notarytool --wait)
-        run: |
-          xcrun notarytool submit "$DMG_PATH" \
-            --apple-id "${{ secrets.NOTARIZE_APPLE_ID }}" \
-            --password "${{ secrets.NOTARIZE_PASSWORD }}" \
-            --team-id "${{ secrets.TEAM_ID }}" \
-            --wait
-
-      - name: Validate & staple for distribution
-        run: |
-          echo "Verifying app signature and entitlements..."
-          codesign --verify --deep --strict --verbose=2 "$EXPORT_DIR/$APP_NAME.app"
-          spctl -a -vvv --type exec "$EXPORT_DIR/$APP_NAME.app"
-
-          echo "Stapling notarization ticket to DMG..."
-          xcrun stapler staple "$DMG_PATH"
-          xcrun stapler validate "$DMG_PATH"
-
-      - name: Install Sparkle tools
-        run: |
-          curl -L https://github.com/sparkle-project/Sparkle/releases/download/2.8.0/Sparkle-2.8.0.tar.xz | tar -xJ
+          ./scripts/ci/prepare_release.sh \
+            "${{ github.event.release.tag_name }}" \
+            "${{ github.event.release.body }}" \
+            "${{ github.event.release.prerelease }}"
 
       - name: Generate appcast signature
         id: appcast
         run: |
-          # Get file size
-          FILE_SIZE=$(stat -f%z "$DMG_PATH")
-          echo "file_size=$FILE_SIZE" >> "$GITHUB_OUTPUT"
-          
-          # Generate EdDSA signature
-          echo "${{ secrets.SPARKLE_PRIVATE_KEY }}" > private_key.pem
-          SIGNATURE=$(./Sparkle-2.8.0/bin/sign_update "$DMG_PATH" private_key.pem)
-          echo "signature=$SIGNATURE" >> "$GITHUB_OUTPUT"
-          rm private_key.pem
-          
-          # Get bundle version from built app
-          BUNDLE_VERSION=$(defaults read "$EXPORT_DIR/$APP_NAME.app/Contents/Info.plist" CFBundleVersion)
-          echo "bundle_version=$BUNDLE_VERSION" >> "$GITHUB_OUTPUT"
+          DMG_PATH=$(find . -name "*.dmg" -type f | head -1)
+          echo "DMG_PATH=$DMG_PATH" >> "$GITHUB_OUTPUT"
+          ./scripts/ci/generate_appcast.sh \
+            "$DMG_PATH" \
+            "${{ secrets.SPARKLE_PRIVATE_KEY }}"
 
-      - name: Prepare release body
-        id: release_notes
-        run: |
-          # Use the actual release description from the GitHub event
-          RELEASE_BODY="${{ github.event.release.body }}"
-          
-          # Extract semantic version (remove 'v' prefix if present)
-          TAG_NAME="${{ github.event.release.tag_name }}"
-          SEMVER="${TAG_NAME#v}"
-          echo "semantic_version=$SEMVER" >> "$GITHUB_OUTPUT"
-          
-          # Check if this is a prerelease
-          IS_PRERELEASE="${{ github.event.release.prerelease }}"
-          echo "is_prerelease=$IS_PRERELEASE" >> "$GITHUB_OUTPUT"
-          
-          # Fallback if release body is empty
-          if [ -z "$RELEASE_BODY" ]; then
-            RELEASE_BODY="## 🚀 Annotate ${{ github.event.release.tag_name }}
-
-Enhanced drawing tools, performance improvements, and bug fixes."
-          fi
-          
-          # Store in output for appcast
-          echo "release_body<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$RELEASE_BODY" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
-
-      - name: Upload DMG to existing release
+      - name: Upload DMG to release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.release.tag_name }}
-          files: |
-            ${{ env.DMG_PATH }}
+          files: "*.dmg"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-
-      - name: Update appcast.xml  
-        if: ${{ steps.release_notes.outputs.is_prerelease == 'false' }}
+      - name: Update appcast.xml
+        # if: ${{ steps.release_notes.outputs.is_prerelease == 'false' }}
         run: |
-          cat > new_entry.xml << EOF
-          <item>
-              <title>Version ${{ github.event.release.tag_name }}</title>
-              <link>https://github.com/epilande/Annotate/releases/tag/${{ github.event.release.tag_name }}</link>
-              <description><![CDATA[
-${{ steps.release_notes.outputs.release_body }}
-              ]]></description>
-              <pubDate>$(date -R)</pubDate>
-              <enclosure url="https://github.com/epilande/Annotate/releases/download/${{ github.event.release.tag_name }}/$(basename "$DMG_PATH")"
-                         sparkle:version="${{ steps.appcast.outputs.bundle_version }}"
-                         sparkle:shortVersionString="${{ steps.release_notes.outputs.semantic_version }}"
-                         sparkle:edSignature="${{ steps.appcast.outputs.signature }}"
-                         length="${{ steps.appcast.outputs.file_size }}"
-                         type="application/octet-stream" />
-          </item>
-          EOF
-          
-          echo "Generated appcast entry:"
-          cat new_entry.xml
-          
-          # Insert new entry into appcast.xml after the channel description
-          sed -i.bak '/^        <description>.*<\/description>$/r new_entry.xml' appcast.xml
-          rm new_entry.xml appcast.xml.bak
+          ./scripts/ci/update_appcast.sh \
+            "${{ github.event.release.tag_name }}" \
+            "${{ steps.release_notes.outputs.semantic_version }}" \
+            "${{ steps.appcast.outputs.bundle_version }}" \
+            "${{ steps.appcast.outputs.signature }}" \
+            "${{ steps.appcast.outputs.file_size }}" \
+            "${{ steps.appcast.outputs.DMG_PATH }}" \
+            "${{ steps.release_notes.outputs.release_body }}"
 
       - name: Commit updated appcast
-        if: ${{ steps.release_notes.outputs.is_prerelease == 'false' }}
+        # if: ${{ steps.release_notes.outputs.is_prerelease == 'false' }}
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.email \
+            "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add appcast.xml
-          git commit -m "Update appcast.xml for ${{ github.event.release.tag_name }}"
+          git commit -m \
+            "chore: Update appcast.xml for ${{ github.event.release.tag_name }}"
           git push origin HEAD:auto-update
 
-      - name: Skip appcast update (prerelease)
-        if: ${{ steps.release_notes.outputs.is_prerelease == 'true' }}
-        run: |
-          echo "⚠️  Skipping appcast update for prerelease ${{ github.event.release.tag_name }}"
-          echo "   Users will not be notified of this beta/RC version via auto-updates"
-
-
+      # - name: Skip appcast update (prerelease)
+      #   if: ${{ steps.release_notes.outputs.is_prerelease == 'true' }}
+      #   run: |
+      #     echo "⚠️  Skipping appcast update for prerelease \
+      #       ${{ github.event.release.tag_name }}"
+      #     echo "   Users will not be notified of this beta/RC \
+      #       version via auto-updates"

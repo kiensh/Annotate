@@ -4,32 +4,30 @@
         <title>Annotate Changelog</title>
         <link>https://github.com/epilande/Annotate</link>
         <description>Annotate App Updates</description>
-        <language>en</language>
-        
-        <!-- TEST ENTRY for local development -->
         <item>
-            <title>Version 1.0.6 - Test Update</title>
+            <title>Version v1.0.6</title>
             <link>https://github.com/epilande/Annotate/releases/tag/v1.0.6</link>
-            <sparkle:releaseNotesLink>https://github.com/epilande/Annotate/releases/tag/v1.0.6</sparkle:releaseNotesLink>
             <description><![CDATA[
-                <h2>🎉 Test Update v1.0.6</h2>
-                <ul>
-                    <li>🔄 Auto-update functionality added</li>
-                    <li>🎯 Enhanced drawing tools</li>
-                    <li>🚀 Performance improvements</li>
-                    <li>🐛 Bug fixes and stability improvements</li>
-                </ul>
-                <p><strong>This is a test update to verify Sparkle integration!</strong></p>
+<h2>🚀 Annotate v1.0.6</h2>
+
+<h3>Bug Fixes</h3>
+<ul>
+<li>Fixed color picker popover reference to enable repeated usage</li>
+</ul>
+
+<h3>Infrastructure</h3>
+<ul>
+<li>Added automated macOS release workflow</li>
+<li>Added GitHub Actions workflow for automated testing</li>
+</ul>
             ]]></description>
-            <pubDate>Wed, 25 Sep 2024 12:00:00 +0000</pubDate>
+            <pubDate>Sun, 15 Sep 2025 11:27:57 -0700</pubDate>
             <enclosure url="https://github.com/epilande/Annotate/releases/download/v1.0.6/Annotate.dmg"
-                       sparkle:version="2"
+                       sparkle:version="106"
                        sparkle:shortVersionString="1.0.6"
-                       length="12345678"
+                       length="3512042"
                        type="application/octet-stream" />
         </item>
-        
-        <!-- Release entries will be automatically added by CI/CD pipeline -->
-        
+        <language>en</language>
     </channel>
 </rss>

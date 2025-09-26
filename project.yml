@@ -43,6 +43,9 @@ targets:
       - AnnotateTests
     dependencies:
       - target: Annotate
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: true
 
 packages:
   KeyboardShortcuts:

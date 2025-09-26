@@ -74,6 +74,7 @@
 		81E3F850F2E321AD0BAEF3A0 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		83AE20D0ECA858724452FC15 /* NSColorExtensionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NSColorExtensionsTests.swift; sourceTree = "<group>"; };
 		847AFBC80865F7D45C998B53 /* Array+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Array+Extensions.swift"; sourceTree = "<group>"; };
+		86A141ED49C21E1A3497048D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		8AA2FFC85C4E38FF608F9AF3 /* BoardViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardViewTests.swift; sourceTree = "<group>"; };
 		946F5E92DE3DAF1A47E3F28E /* NSImageExtensionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NSImageExtensionsTests.swift; sourceTree = "<group>"; };
 		9665DE19443CE9027FF350BB /* BoardManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardManagerTests.swift; sourceTree = "<group>"; };
@@ -114,6 +115,7 @@
 				3F8AC0695DB6424AB9CFA8B2 /* BoardView.swift */,
 				180B06FC85BF77BB1009B004 /* ColorPickerViewController.swift */,
 				3ABE33F64CF2FA0D9B9A1660 /* Constants.swift */,
+				86A141ED49C21E1A3497048D /* Info.plist */,
 				81E3F850F2E321AD0BAEF3A0 /* Models.swift */,
 				57FDB09881C923BCE351B895 /* NSColor+Extensions.swift */,
 				A043765B3A5CA07299E2E39E /* NSImage+Extensions.swift */,
@@ -321,7 +323,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
-				GENERATE_INFOPLIST_FILE = NO;
+				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -343,9 +345,17 @@
 				DEVELOPMENT_ASSET_PATHS = "\"Annotate/Preview Content\"";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Annotate/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				"INFOPLIST_FILE[sdk=macosx*]" = Annotate/Info.plist;
+				INFOPLIST_KEY_SUAllowsAutomaticUpdates = NO;
+				INFOPLIST_KEY_SUEnableAutomaticChecks = YES;
+				INFOPLIST_KEY_SUEnableDownloaderService = NO;
+				INFOPLIST_KEY_SUEnableInstallerLauncherService = YES;
+				INFOPLIST_KEY_SUEnableSystemProfiling = NO;
+				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/epilande/Annotate/auto-update/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = "KxIw4U6lMckcUyTYidHU2jbo0VtFgDd1VrMsYpB9GXY=";
+				INFOPLIST_KEY_SUScheduledCheckInterval = 86400;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -363,7 +373,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
-				GENERATE_INFOPLIST_FILE = NO;
+				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -504,9 +514,17 @@
 				DEVELOPMENT_ASSET_PATHS = "\"Annotate/Preview Content\"";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Annotate/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				"INFOPLIST_FILE[sdk=macosx*]" = Annotate/Info.plist;
+				INFOPLIST_KEY_SUAllowsAutomaticUpdates = NO;
+				INFOPLIST_KEY_SUEnableAutomaticChecks = YES;
+				INFOPLIST_KEY_SUEnableDownloaderService = NO;
+				INFOPLIST_KEY_SUEnableInstallerLauncherService = YES;
+				INFOPLIST_KEY_SUEnableSystemProfiling = NO;
+				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/epilande/Annotate/auto-update/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = "KxIw4U6lMckcUyTYidHU2jbo0VtFgDd1VrMsYpB9GXY=";
+				INFOPLIST_KEY_SUScheduledCheckInterval = 86400;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
