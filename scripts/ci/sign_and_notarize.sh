@@ -25,15 +25,13 @@ echo "🔐 Preparing export options with Team ID..."
 # Substitute the TEAM_ID placeholder in the export plist
 sed "s/__TEAM_ID__/$TEAM_ID/g" "$EXPORT_PLIST" > "$TEMP_EXPORT_PLIST"
 
-echo "🔐 Exporting signed app..."
+echo "📦 Copying app from archive (skipping xcodebuild export)..."
 
 mkdir -p "$EXPORT_DIR"
-xcodebuild -exportArchive \
-    -archivePath "$ARCHIVE_PATH" \
-    -exportPath "$EXPORT_DIR" \
-    -exportOptionsPlist "$TEMP_EXPORT_PLIST" | xcpretty && exit ${PIPESTATUS[0]}
+# Copy the app directly from the archive instead of using exportArchive
+cp -R "$ARCHIVE_PATH/Products/Applications/$APP_NAME.app" "$EXPORT_DIR/"
 
-echo "🔒 Re-signing with hardened runtime..."
+echo "🔒 Signing with Developer ID and hardened runtime..."
 
 codesign --force --sign "Developer ID Application" \
     -o runtime --timestamp \
