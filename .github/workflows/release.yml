@@ -31,11 +31,18 @@ jobs:
       - name: Install xcpretty
         run: gem install xcpretty --no-document
 
+      - name: Import Developer ID certificate
+        uses: apple-actions/import-codesign-certs@v5
+        with:
+          p12-file-base64: ${{ secrets.MACOS_CERT_BASE64 }}
+          p12-password: ${{ secrets.MACOS_CERT_PASSWORD }}
+
       - name: Build and archive
         id: build
         run: |
           ./scripts/ci/build_and_archive.sh \
-            "${{ github.event.release.tag_name }}"
+            "${{ github.event.release.tag_name }}" \
+            "${{ secrets.TEAM_ID }}"
           echo "archive-path=build/Annotate.xcarchive" >> "$GITHUB_OUTPUT"
 
       - name: Upload archive artifact
