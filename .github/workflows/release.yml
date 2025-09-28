@@ -121,3 +121,39 @@ jobs:
             ${{ env.DMG_PATH }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Sparkle tools
+        run: ./scripts/ci/install_sparkle_tools.sh
+
+      - name: Generate Sparkle signature
+        id: sparkle
+        run: |
+          # Extract bundle version using plutil (more reliable than defaults read)
+          BUNDLE_VERSION=$(plutil -extract CFBundleVersion raw "$EXPORT_DIR/$APP_NAME.app/Contents/Info.plist")
+          echo "bundle_version=$BUNDLE_VERSION" >> "$GITHUB_OUTPUT"
+          
+          FILE_SIZE=$(stat -f%z "$DMG_PATH")
+          echo "file_size=$FILE_SIZE" >> "$GITHUB_OUTPUT"
+          
+          # Use the proven working generate_appcast.sh script approach
+          ./scripts/ci/generate_appcast.sh \
+            "$DMG_PATH" \
+            "${{ secrets.SPARKLE_PRIVATE_KEY }}"
+
+      - name: Update appcast.xml
+        run: |
+          ./scripts/ci/update_appcast_xml.sh \
+            "$DMG_PATH" \
+            "${{ steps.version.outputs.tag }}" \
+            "${{ steps.version.outputs.semver }}" \
+            "${{ steps.sparkle.outputs.bundle_version }}" \
+            "${{ steps.sparkle.outputs.signature }}" \
+            "Release notes for ${{ steps.version.outputs.tag }}"
+
+      - name: Commit updated appcast
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add appcast.xml
+          git commit -m "chore: Update appcast.xml for ${{ steps.version.outputs.tag }}"
+          git push origin HEAD:main
