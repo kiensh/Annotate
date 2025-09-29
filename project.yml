@@ -53,4 +53,4 @@ packages:
     from: "2.2.4"
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle
-    from: "2.0.0"
+    from: "2.8.0"

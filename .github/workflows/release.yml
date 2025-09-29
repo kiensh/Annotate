@@ -12,6 +12,7 @@ jobs:
   build-sign-notarize-release:
     name: Build → Sign → Notarize → Release
     runs-on: macos-15
+    timeout-minutes: 8
     environment: release
     env:
       APP_NAME: Annotate
@@ -56,6 +57,7 @@ jobs:
         run: gem install xcpretty --no-document
 
       - name: Xcode archive (arm64, verbose, unsigned)
+        timeout-minutes: 3
         run: |
           set -euxo pipefail
           mkdir -p build
@@ -72,6 +74,7 @@ jobs:
             clean archive | xcpretty && exit ${PIPESTATUS[0]}
 
       - name: Export signed app (Developer ID)
+        timeout-minutes: 2
         run: |
           mkdir -p "$EXPORT_DIR"
           xcodebuild -exportArchive \
@@ -89,14 +92,19 @@ jobs:
       - name: Create ZIP for notarization
         run: |
           ZIP_NAME="$APP_NAME-${{ steps.version.outputs.semver }}.zip"
-          (cd "$EXPORT_DIR" && zip -r "../$ZIP_NAME" "$APP_NAME.app")
           ZIP_PATH="build/$ZIP_NAME"
           echo "ZIP_PATH=$ZIP_PATH" >> $GITHUB_ENV
           echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
+          
+          echo "📦 Creating ZIP archive: $ZIP_NAME"
+          rm -f "$ZIP_PATH"
+          (cd "$EXPORT_DIR" && zip -r "../$ZIP_NAME" "$APP_NAME.app")
+          echo "✅ ZIP created: $ZIP_PATH ($(stat -f%z "$ZIP_PATH") bytes)"
 
       - name: Notarize app bundle
+        timeout-minutes: 5
         run: |
-          echo "📝 Submitting .app bundle for notarization..."
+          echo "📝 Submitting ZIP archive for notarization..."
           xcrun notarytool submit "$ZIP_PATH" \
             --apple-id "${{ secrets.NOTARIZE_APPLE_ID }}" \
             --password "${{ secrets.NOTARIZE_PASSWORD }}" \
@@ -115,9 +123,11 @@ jobs:
 
       - name: Update ZIP with stapled app
         run: |
-          echo "📦 Recreating ZIP with stapled notarization..."
+          # Update ZIP with stapled notarization
+          echo "📦 Updating ZIP with stapled notarization..."
           rm -f "$ZIP_PATH"
           (cd "$EXPORT_DIR" && zip -r "../$ZIP_NAME" "$APP_NAME.app")
+          echo "✅ ZIP updated: $ZIP_PATH ($(stat -f%z "$ZIP_PATH") bytes)"
 
       - name: Package DMG from notarized app
         run: |
@@ -139,49 +149,44 @@ jobs:
 
       - name: Sign Sparkle update
         run: |
-          # Debug: Check if ZIP file exists and get its size
+          # Verify ZIP file exists
           if [ ! -f "$ZIP_PATH" ]; then
             echo "❌ ZIP file not found at: $ZIP_PATH"
-            ls -la build/
             exit 1
           fi
           echo "✅ ZIP file found: $ZIP_PATH ($(stat -f%z "$ZIP_PATH") bytes)"
           
           # Check if SPARKLE_PRIVATE_KEY secret exists
           if [ -z "${{ secrets.SPARKLE_PRIVATE_KEY }}" ]; then
-            echo "⚠️ SPARKLE_PRIVATE_KEY secret is not set - skipping Sparkle signing"
-            echo ""
-            echo "To enable Sparkle updates:"
-            echo "1. Run: ./scripts/generate_sparkle_keys.sh"
-            echo "2. Add the private key as SPARKLE_PRIVATE_KEY secret in GitHub"
-            echo "3. Add the public key to your app's Info.plist"
-            echo ""
-            echo "Using placeholder signature for now..."
-            echo "SPARKLE_SIGNATURE=placeholder-signature-replace-with-real-key" >> $GITHUB_ENV
-            exit 0
+            echo "❌ SPARKLE_PRIVATE_KEY secret is not set"
+            exit 1
           fi
           
-          # Create private key file from secret
-          echo "${{ secrets.SPARKLE_PRIVATE_KEY }}" > sparkle_private_key.pem
+          # Create secure temporary file for private key
+          PRIVATE_KEY_FILE=$(mktemp)
+          trap "rm -f '$PRIVATE_KEY_FILE'" EXIT
+          
+          # Write private key to secure temp file
+          echo "${{ secrets.SPARKLE_PRIVATE_KEY }}" > "$PRIVATE_KEY_FILE"
+          chmod 600 "$PRIVATE_KEY_FILE"
           
           # Verify private key file was created
-          if [ ! -f sparkle_private_key.pem ] || [ ! -s sparkle_private_key.pem ]; then
+          if [ ! -f "$PRIVATE_KEY_FILE" ] || [ ! -s "$PRIVATE_KEY_FILE" ]; then
             echo "❌ Private key file creation failed"
             exit 1
           fi
-          echo "✅ Private key file created"
+          echo "✅ Private key file created securely"
           
-          # Debug: Check sign_update binary
+          # Verify sign_update binary
           if [ ! -x "./bin/sign_update" ]; then
             echo "❌ sign_update binary not found or not executable"
-            ls -la bin/
             exit 1
           fi
           echo "✅ sign_update binary found"
           
           # Sign the ZIP file with error handling
           echo "Signing ZIP file..."
-          if SIGNATURE=$(./bin/sign_update "$ZIP_PATH" -f sparkle_private_key.pem 2>&1); then
+          if SIGNATURE=$(./bin/sign_update "$ZIP_PATH" -f "$PRIVATE_KEY_FILE" 2>&1); then
             echo "SPARKLE_SIGNATURE=$SIGNATURE" >> $GITHUB_ENV
             echo "✅ Sparkle update signed successfully"
             echo "Signature: $SIGNATURE"
@@ -191,8 +196,7 @@ jobs:
             exit 1
           fi
           
-          # Clean up private key
-          rm sparkle_private_key.pem
+          # Private key cleanup handled by trap
 
       - name: Calculate ZIP file size
         run: |
@@ -209,11 +213,6 @@ jobs:
           VERSION_NUMBER="${{ steps.version.outputs.semver }}"
           SPARKLE_VERSION=$(echo "$VERSION_NUMBER" | tr -d '.')
           
-          # Check if we have a real signature or placeholder
-          if [[ "$SPARKLE_SIGNATURE" == "placeholder-signature-replace-with-real-key" ]]; then
-            echo "⚠️ Using placeholder signature - this appcast entry won't work for real updates"
-            echo "Generate and configure EdDSA keys to enable functional Sparkle updates"
-          fi
           
           # Generate new appcast entry
           cat > new_entry.xml << EOF
@@ -239,9 +238,6 @@ jobs:
 
       - name: Update appcast.xml
         run: |
-          # Create backup
-          cp appcast.xml appcast.xml.backup
-          
           # Insert new entry after the opening <channel> tag
           # This places the newest version at the top
           sed -i.tmp '/<channel>/r new_entry.xml' appcast.xml
@@ -251,8 +247,10 @@ jobs:
 
       - name: Commit updated appcast
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Configure git if not already set
+          git config user.name "github-actions[bot]" 2>/dev/null || true
+          git config user.email "github-actions[bot]@users.noreply.github.com" 2>/dev/null || true
+          
           git add appcast.xml
           if git diff --cached --quiet; then
             echo "No changes to appcast.xml"
