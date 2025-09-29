@@ -3,7 +3,13 @@ set -euo pipefail
 APP_NAME="Annotate"
 PRODUCT_DIR="build/export"
 APP_PATH="$PRODUCT_DIR/$APP_NAME.app"
-DMG_NAME="$APP_NAME.dmg"
+
+# Use version from environment or default to just app name
+if [ -n "${MARKETING_VERSION:-}" ]; then
+    DMG_NAME="$APP_NAME-$MARKETING_VERSION.dmg"
+else
+    DMG_NAME="$APP_NAME.dmg"
+fi
 DMG_OUT="build/$DMG_NAME"
 
 rm -f "$DMG_OUT"
