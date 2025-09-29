@@ -92,6 +92,151 @@ jobs:
           DMG_PATH=$(./packaging/make_dmg.sh)
           echo "DMG_PATH=$DMG_PATH" >> $GITHUB_ENV
 
+      - name: Create ZIP
+        run: |
+          ZIP_NAME="$APP_NAME-${{ steps.version.outputs.semver }}.zip"
+          (cd "$EXPORT_DIR" && zip -r "../$ZIP_NAME" "$APP_NAME.app")
+          ZIP_PATH="build/$ZIP_NAME"
+          echo "ZIP_PATH=$ZIP_PATH" >> $GITHUB_ENV
+          echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
+
+      - name: Download Sparkle tools
+        run: |
+          SPARKLE_VERSION="2.8.0"
+          SPARKLE_URL="https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_VERSION}/Sparkle-${SPARKLE_VERSION}.tar.xz"
+          echo "Downloading Sparkle tools from: $SPARKLE_URL"
+          curl -L "$SPARKLE_URL" | tar -xJ
+          if [ ! -x "./bin/sign_update" ]; then
+            echo "❌ sign_update binary not found or not executable"
+            exit 1
+          fi
+          echo "✅ Sparkle tools downloaded and extracted"
+
+      - name: Sign Sparkle update
+        run: |
+          # Debug: Check if ZIP file exists and get its size
+          if [ ! -f "$ZIP_PATH" ]; then
+            echo "❌ ZIP file not found at: $ZIP_PATH"
+            ls -la build/
+            exit 1
+          fi
+          echo "✅ ZIP file found: $ZIP_PATH ($(stat -f%z "$ZIP_PATH") bytes)"
+          
+          # Check if SPARKLE_PRIVATE_KEY secret exists
+          if [ -z "${{ secrets.SPARKLE_PRIVATE_KEY }}" ]; then
+            echo "⚠️ SPARKLE_PRIVATE_KEY secret is not set - skipping Sparkle signing"
+            echo ""
+            echo "To enable Sparkle updates:"
+            echo "1. Run: ./scripts/generate_sparkle_keys.sh"
+            echo "2. Add the private key as SPARKLE_PRIVATE_KEY secret in GitHub"
+            echo "3. Add the public key to your app's Info.plist"
+            echo ""
+            echo "Using placeholder signature for now..."
+            echo "SPARKLE_SIGNATURE=placeholder-signature-replace-with-real-key" >> $GITHUB_ENV
+            exit 0
+          fi
+          
+          # Create private key file from secret
+          echo "${{ secrets.SPARKLE_PRIVATE_KEY }}" > sparkle_private_key.pem
+          
+          # Verify private key file was created
+          if [ ! -f sparkle_private_key.pem ] || [ ! -s sparkle_private_key.pem ]; then
+            echo "❌ Private key file creation failed"
+            exit 1
+          fi
+          echo "✅ Private key file created"
+          
+          # Debug: Check sign_update binary
+          if [ ! -x "./bin/sign_update" ]; then
+            echo "❌ sign_update binary not found or not executable"
+            ls -la bin/
+            exit 1
+          fi
+          echo "✅ sign_update binary found"
+          
+          # Sign the ZIP file with error handling
+          echo "Signing ZIP file..."
+          if SIGNATURE=$(./bin/sign_update "$ZIP_PATH" -f sparkle_private_key.pem 2>&1); then
+            echo "SPARKLE_SIGNATURE=$SIGNATURE" >> $GITHUB_ENV
+            echo "✅ Sparkle update signed successfully"
+            echo "Signature: $SIGNATURE"
+          else
+            echo "❌ Sparkle signing failed with error:"
+            echo "$SIGNATURE"
+            exit 1
+          fi
+          
+          # Clean up private key
+          rm sparkle_private_key.pem
+
+      - name: Calculate ZIP file size
+        run: |
+          FILE_SIZE=$(stat -f%z "$ZIP_PATH")
+          echo "ZIP_SIZE=$FILE_SIZE" >> $GITHUB_ENV
+          echo "ZIP file size: $FILE_SIZE bytes"
+
+      - name: Generate appcast entry
+        run: |
+          PUB_DATE=$(date -u +"%a, %d %b %Y %H:%M:%S %z")
+          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/$ZIP_NAME"
+          
+          # Extract current version number for sparkle:version (remove dots)
+          VERSION_NUMBER="${{ steps.version.outputs.semver }}"
+          SPARKLE_VERSION=$(echo "$VERSION_NUMBER" | tr -d '.')
+          
+          # Check if we have a real signature or placeholder
+          if [[ "$SPARKLE_SIGNATURE" == "placeholder-signature-replace-with-real-key" ]]; then
+            echo "⚠️ Using placeholder signature - this appcast entry won't work for real updates"
+            echo "Generate and configure EdDSA keys to enable functional Sparkle updates"
+          fi
+          
+          # Generate new appcast entry
+          cat > new_entry.xml << EOF
+          <item>
+              <title>Version ${{ steps.version.outputs.tag }}</title>
+              <link>https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag }}</link>
+              <description><![CDATA[
+          ## 🚀 Annotate ${{ steps.version.outputs.tag }}
+          
+          See the [full changelog](https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag }}) for details.
+              ]]></description>
+              <pubDate>$PUB_DATE</pubDate>
+              <enclosure url="$DOWNLOAD_URL"
+                         sparkle:version="$SPARKLE_VERSION"
+                         sparkle:shortVersionString="$VERSION_NUMBER"
+                         sparkle:edSignature="$SPARKLE_SIGNATURE"
+                         length="$ZIP_SIZE"
+                         type="application/octet-stream" />
+          </item>
+          EOF
+          
+          echo "✅ Generated appcast entry for version ${{ steps.version.outputs.tag }}"
+
+      - name: Update appcast.xml
+        run: |
+          # Create backup
+          cp appcast.xml appcast.xml.backup
+          
+          # Insert new entry after the opening <channel> tag
+          # This places the newest version at the top
+          sed -i.tmp '/<channel>/r new_entry.xml' appcast.xml
+          rm appcast.xml.tmp new_entry.xml
+          
+          echo "✅ Updated appcast.xml with new entry"
+
+      - name: Commit updated appcast
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add appcast.xml
+          if git diff --cached --quiet; then
+            echo "No changes to appcast.xml"
+          else
+            git commit -m "chore: Update appcast.xml for release ${{ steps.version.outputs.tag }}"
+            git push origin HEAD:auto-update
+            echo "✅ Committed updated appcast.xml"
+          fi
+
       - name: Notarize (notarytool --wait)
         run: |
           xcrun notarytool submit "$DMG_PATH" \
@@ -110,7 +255,7 @@ jobs:
           xcrun stapler staple "$DMG_PATH"
           xcrun stapler validate "$DMG_PATH"
 
-      - name: Create GitHub Release & upload DMG
+      - name: Create GitHub Release & upload assets
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
@@ -119,41 +264,7 @@ jobs:
           prerelease: false
           files: |
             ${{ env.DMG_PATH }}
+            ${{ env.ZIP_PATH }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install Sparkle tools
-        run: ./scripts/ci/install_sparkle_tools.sh
-
-      - name: Generate Sparkle signature
-        id: sparkle
-        run: |
-          # Extract bundle version using plutil (more reliable than defaults read)
-          BUNDLE_VERSION=$(plutil -extract CFBundleVersion raw "$EXPORT_DIR/$APP_NAME.app/Contents/Info.plist")
-          echo "bundle_version=$BUNDLE_VERSION" >> "$GITHUB_OUTPUT"
-          
-          FILE_SIZE=$(stat -f%z "$DMG_PATH")
-          echo "file_size=$FILE_SIZE" >> "$GITHUB_OUTPUT"
-          
-          # Use the proven working generate_appcast.sh script approach
-          ./scripts/ci/generate_appcast.sh \
-            "$DMG_PATH" \
-            "${{ secrets.SPARKLE_PRIVATE_KEY }}"
-
-      - name: Update appcast.xml
-        run: |
-          ./scripts/ci/update_appcast_xml.sh \
-            "$DMG_PATH" \
-            "${{ steps.version.outputs.tag }}" \
-            "${{ steps.version.outputs.semver }}" \
-            "${{ steps.sparkle.outputs.bundle_version }}" \
-            "${{ steps.sparkle.outputs.signature }}" \
-            "Release notes for ${{ steps.version.outputs.tag }}"
-
-      - name: Commit updated appcast
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add appcast.xml
-          git commit -m "chore: Update appcast.xml for ${{ steps.version.outputs.tag }}"
-          git push origin HEAD:main

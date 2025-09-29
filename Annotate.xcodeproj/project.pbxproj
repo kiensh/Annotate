@@ -354,7 +354,7 @@
 				INFOPLIST_KEY_SUEnableInstallerLauncherService = YES;
 				INFOPLIST_KEY_SUEnableSystemProfiling = NO;
 				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/epilande/Annotate/auto-update/appcast.xml";
-				INFOPLIST_KEY_SUPublicEDKey = "KxIw4U6lMckcUyTYidHU2jbo0VtFgDd1VrMsYpB9GXY=";
+				INFOPLIST_KEY_SUPublicEDKey = "zKs810UVligBC4LdTPa0TXY4P7R6jtg7ZjjeQX1ULLk=";
 				INFOPLIST_KEY_SUScheduledCheckInterval = 86400;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -523,7 +523,7 @@
 				INFOPLIST_KEY_SUEnableInstallerLauncherService = YES;
 				INFOPLIST_KEY_SUEnableSystemProfiling = NO;
 				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/epilande/Annotate/auto-update/appcast.xml";
-				INFOPLIST_KEY_SUPublicEDKey = "KxIw4U6lMckcUyTYidHU2jbo0VtFgDd1VrMsYpB9GXY=";
+				INFOPLIST_KEY_SUPublicEDKey = "zKs810UVligBC4LdTPa0TXY4P7R6jtg7ZjjeQX1ULLk=";
 				INFOPLIST_KEY_SUScheduledCheckInterval = 86400;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

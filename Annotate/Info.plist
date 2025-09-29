@@ -27,7 +27,7 @@
 	<key>SUFeedURL</key>
 	<string>https://raw.githubusercontent.com/epilande/Annotate/auto-update/appcast.xml</string>
 	<key>SUPublicEDKey</key>
-	<string>KxIw4U6lMckcUyTYidHU2jbo0VtFgDd1VrMsYpB9GXY=</string>
+	<string>zKs810UVligBC4LdTPa0TXY4P7R6jtg7ZjjeQX1ULLk=</string>
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
 	<key>SUScheduledCheckInterval</key>
