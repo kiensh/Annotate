@@ -204,46 +204,22 @@ jobs:
           echo "ZIP_SIZE=$FILE_SIZE" >> $GITHUB_ENV
           echo "ZIP file size: $FILE_SIZE bytes"
 
-      - name: Generate appcast entry
+      - name: Generate and update appcast entry
         run: |
-          PUB_DATE=$(date -u +"%a, %d %b %Y %H:%M:%S %z")
-          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/$ZIP_NAME"
-          
           # Extract current version number for sparkle:version (remove dots)
           VERSION_NUMBER="${{ steps.version.outputs.semver }}"
           SPARKLE_VERSION=$(echo "$VERSION_NUMBER" | tr -d '.')
+          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/$ZIP_NAME"
           
-          
-          # Generate new appcast entry
-          cat > new_entry.xml << EOF
-          <item>
-              <title>Version ${{ steps.version.outputs.tag }}</title>
-              <link>https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag }}</link>
-              <description><![CDATA[
-          ## 🚀 Annotate ${{ steps.version.outputs.tag }}
-          
-          See the [full changelog](https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag }}) for details.
-              ]]></description>
-              <pubDate>$PUB_DATE</pubDate>
-              <enclosure url="$DOWNLOAD_URL"
-                         sparkle:version="$SPARKLE_VERSION"
-                         sparkle:shortVersionString="$VERSION_NUMBER"
-                         sparkle:edSignature="$SPARKLE_SIGNATURE"
-                         length="$ZIP_SIZE"
-                         type="application/octet-stream" />
-          </item>
-          EOF
-          
-          echo "✅ Generated appcast entry for version ${{ steps.version.outputs.tag }}"
-
-      - name: Update appcast.xml
-        run: |
-          # Insert new entry after the opening <channel> tag
-          # This places the newest version at the top
-          sed -i.tmp '/<channel>/r new_entry.xml' appcast.xml
-          rm appcast.xml.tmp new_entry.xml
-          
-          echo "✅ Updated appcast.xml with new entry"
+          # Use the isolated script to generate and insert the appcast entry
+          chmod +x scripts/ci/generate_appcast_entry.sh
+          ./scripts/ci/generate_appcast_entry.sh \
+            "${{ steps.version.outputs.tag }}" \
+            "$VERSION_NUMBER" \
+            "$SPARKLE_VERSION" \
+            "$SPARKLE_SIGNATURE" \
+            "$ZIP_SIZE" \
+            "$DOWNLOAD_URL"
 
       - name: Commit updated appcast
         run: |
