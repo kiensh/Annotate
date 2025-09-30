@@ -22,6 +22,12 @@ create-dmg \
   "$APP_PATH" \
   "$(dirname "$DMG_OUT")" 1>&2
 
-mv "$(dirname "$DMG_OUT")"/"$APP_NAME"*.dmg "$DMG_OUT" 1>&2
+# Find the created DMG file and rename it to our desired name
+# create-dmg creates files like "Annotate 1.0.8-test.dmg" but we want "Annotate-1.0.8-test.dmg"
+CREATED_DMG=$(find "$(dirname "$DMG_OUT")" -name "$APP_NAME*.dmg" -type f | head -1)
+if [ -n "$CREATED_DMG" ] && [ "$CREATED_DMG" != "$DMG_OUT" ]; then
+    echo "Renaming DMG from '$CREATED_DMG' to '$DMG_OUT'" 1>&2
+    mv "$CREATED_DMG" "$DMG_OUT" 1>&2
+fi
 
 echo "$DMG_OUT"

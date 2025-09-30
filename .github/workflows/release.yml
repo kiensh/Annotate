@@ -134,7 +134,8 @@ jobs:
       - name: Package DMG from notarized app
         run: |
           chmod +x packaging/make_dmg.sh
-          MARKETING_VERSION="${{ steps.version.outputs.semver }}" DMG_PATH=$(./packaging/make_dmg.sh)
+          export MARKETING_VERSION="${{ steps.version.outputs.semver }}"
+          DMG_PATH=$(./packaging/make_dmg.sh)
           echo "DMG_PATH=$DMG_PATH" >> $GITHUB_ENV
 
       - name: Download Sparkle tools
