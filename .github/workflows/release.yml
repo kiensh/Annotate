@@ -40,6 +40,15 @@ jobs:
           TAG="${GITHUB_REF#refs/tags/}"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "semver=${TAG#v}" >> "$GITHUB_OUTPUT"
+          # Generate build number from version (remove dots and dashes, keep alphanumeric)
+          BUILD_NUMBER=$(echo "${TAG#v}" | sed 's/[.-]//g')
+          echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
 
       - name: Inject TEAM_ID into ExportOptions
         run: |
@@ -71,6 +80,7 @@ jobs:
             ARCHS=arm64 \
             CODE_SIGNING_ALLOWED=NO \
             MARKETING_VERSION=${{ steps.version.outputs.semver }} \
+            CURRENT_PROJECT_VERSION=${{ steps.version.outputs.build_number }} \
             clean archive | xcpretty && exit ${PIPESTATUS[0]}
 
       - name: Export signed app (Developer ID)
@@ -213,9 +223,9 @@ jobs:
 
       - name: Generate and update appcast entry
         run: |
-          # Extract current version number for sparkle:version (remove dots)
+          # Use the same build number for Sparkle version consistency
           VERSION_NUMBER="${{ steps.version.outputs.semver }}"
-          SPARKLE_VERSION=$(echo "$VERSION_NUMBER" | tr -d '.')
+          SPARKLE_VERSION="${{ steps.version.outputs.build_number }}"
           DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.tag }}/$ZIP_NAME"
           
           # Use the isolated script to generate and insert the appcast entry

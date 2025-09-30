@@ -73,9 +73,10 @@ cat new_entry.xml
 # Backup original appcast
 cp "$APPCAST_FILE" "${APPCAST_FILE}.backup"
 
-# Insert new entry after channel description
+# Insert new entry after channel language tag (or after channel description if no language tag)
 echo "📝 Updating $APPCAST_FILE..."
-if sed -i.tmp '/^        <description>.*<\/description>$/r new_entry.xml' "$APPCAST_FILE"; then
+if sed -i.tmp '/^        <language>en<\/language>$/r new_entry.xml' "$APPCAST_FILE" || \
+   sed -i.tmp '/^        <description>Annotate App Updates<\/description>$/r new_entry.xml' "$APPCAST_FILE"; then
     rm "${APPCAST_FILE}.tmp" new_entry.xml
     echo "✅ Successfully updated $APPCAST_FILE"
 else

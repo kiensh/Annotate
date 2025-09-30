@@ -4,6 +4,7 @@
         <title>Annotate Changelog</title>
         <link>https://github.com/epilande/Annotate</link>
         <description>Annotate App Updates</description>
+        <language>en</language>
         <item>
             <title>Version v1.0.6</title>
             <link>https://github.com/epilande/Annotate/releases/tag/v1.0.6</link>
@@ -28,6 +29,5 @@
                        length="3512042"
                        type="application/octet-stream" />
         </item>
-        <language>en</language>
     </channel>
 </rss>

@@ -575,7 +575,7 @@
 			repositoryURL = "https://github.com/sparkle-project/Sparkle";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 2.0.0;
+				minimumVersion = 2.8.0;
 			};
 		};
 		D2280A2633CAC57465095EE6 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
