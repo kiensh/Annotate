@@ -186,13 +186,17 @@ jobs:
           
           # Sign the ZIP file with error handling
           echo "Signing ZIP file..."
-          if SIGNATURE=$(./bin/sign_update "$ZIP_PATH" -f "$PRIVATE_KEY_FILE" 2>&1); then
-            echo "SPARKLE_SIGNATURE=$SIGNATURE" >> $GITHUB_ENV
+          if SIGNATURE_OUTPUT=$(./bin/sign_update "$ZIP_PATH" -f "$PRIVATE_KEY_FILE" 2>&1); then
+            # Extract just the signature value from the output
+            # The output format is: sparkle:edSignature="SIGNATURE_VALUE" length="SIZE"
+            SIGNATURE_VALUE=$(echo "$SIGNATURE_OUTPUT" | grep -o 'sparkle:edSignature="[^"]*"' | sed 's/sparkle:edSignature="//;s/"//')
+            echo "SPARKLE_SIGNATURE=$SIGNATURE_VALUE" >> $GITHUB_ENV
             echo "✅ Sparkle update signed successfully"
-            echo "Signature: $SIGNATURE"
+            echo "Signature: $SIGNATURE_VALUE"
+            echo "Full output: $SIGNATURE_OUTPUT"
           else
             echo "❌ Sparkle signing failed with error:"
-            echo "$SIGNATURE"
+            echo "$SIGNATURE_OUTPUT"
             exit 1
           fi
           
