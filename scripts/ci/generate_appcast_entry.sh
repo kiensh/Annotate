@@ -1,9 +1,90 @@
 #!/bin/bash
 
-# Generate and insert new appcast entry
+# Generate and insert new appcast entry with GitHub release notes
 # Usage: ./generate_appcast_entry.sh <tag_name> <version_number> <sparkle_version> <signature> <zip_size> <download_url> [appcast_file]
 
 set -euo pipefail
+
+# Check dependencies
+check_dependencies() {
+    local missing_deps=()
+    
+    if ! command -v gh >/dev/null 2>&1; then
+        missing_deps+=("gh (GitHub CLI)")
+    fi
+    
+    if ! command -v pandoc >/dev/null 2>&1; then
+        missing_deps+=("pandoc")
+    fi
+    
+    if [ ${#missing_deps[@]} -gt 0 ]; then
+        echo "❌ Missing required dependencies:" >&2
+        for dep in "${missing_deps[@]}"; do
+            echo "  - $dep" >&2
+        done
+        echo "" >&2
+        echo "Install missing dependencies:" >&2
+        echo "  brew install gh pandoc" >&2
+        return 1
+    fi
+    
+    return 0
+}
+
+# Function to fetch GitHub release notes
+fetch_github_release_notes() {
+    local tag_name="$1"
+    
+    echo "🔍 Fetching GitHub release notes for $tag_name..." >&2
+    
+    # Determine repository from environment or default
+    local repo="${GITHUB_REPOSITORY:-epilande/Annotate}"
+    
+    # Use GitHub CLI to fetch release notes with explicit repo context
+    # The GITHUB_TOKEN environment variable is automatically used by gh CLI in GitHub Actions
+    if gh release view "$tag_name" --repo "$repo" --json body --jq '.body' 2>/dev/null; then
+        return 0
+    else
+        echo "⚠️  Failed to fetch GitHub release notes for $tag_name" >&2
+        echo "🔍 Debug: Checking authentication and release existence..." >&2
+        echo "🔍 Repository: $repo" >&2
+        gh auth status >&2 || echo "❌ GitHub CLI not authenticated" >&2
+        gh release list --repo "$repo" --limit 5 >&2 || echo "❌ Cannot access releases" >&2
+        return 1
+    fi
+}
+
+# Function to convert markdown to HTML using pandoc
+convert_markdown_to_html() {
+    local markdown_text="$1"
+    
+    # If input is empty, return empty
+    if [ -z "$markdown_text" ]; then
+        return 0
+    fi
+    
+    # Use pandoc with GitHub Flavored Markdown support
+    echo "$markdown_text" | pandoc -f gfm -t html --wrap=none
+}
+
+# Function to format GitHub release notes as HTML
+format_release_notes_html() {
+    local tag_name="$1"
+    local release_notes="$2"
+    
+    if [ -n "$release_notes" ]; then
+        echo "<h2>🚀 Annotate $tag_name</h2>"
+        echo ""
+        
+        # Convert markdown to basic HTML and filter out existing "Full Changelog" lines
+        convert_markdown_to_html "$release_notes" | grep -v "Full Changelog"
+    else
+        # Fallback to simple description
+        echo "<h2>🚀 Annotate $tag_name</h2>"
+        echo ""
+        echo "<p>See the <a href=\"https://github.com/epilande/Annotate/releases/tag/$tag_name\">full changelog</a> for details.</p>"
+    fi
+}
 
 if [ $# -lt 6 ] || [ $# -gt 7 ]; then
     echo "Usage: $0 <tag_name> <version_number> <sparkle_version> <signature> <zip_size> <download_url> [appcast_file]"
@@ -16,6 +97,11 @@ if [ $# -lt 6 ] || [ $# -gt 7 ]; then
     echo "  zip_size        - ZIP file size in bytes"
     echo "  download_url    - Full download URL"
     echo "  appcast_file    - Optional: appcast file path (default: appcast.xml)"
+    exit 1
+fi
+
+# Check dependencies early
+if ! check_dependencies; then
     exit 1
 fi
 
@@ -47,15 +133,25 @@ echo "  Sparkle Version: $SPARKLE_VERSION"
 echo "  File Size: $ZIP_SIZE bytes"
 echo "  Download URL: $DOWNLOAD_URL"
 
+# Fetch GitHub release notes
+echo "📋 Fetching GitHub release notes..."
+RELEASE_NOTES=""
+if RELEASE_NOTES=$(fetch_github_release_notes "$TAG_NAME"); then
+    echo "✅ Successfully fetched GitHub release notes"
+else
+    echo "⚠️  Using fallback description (GitHub API fetch failed)"
+fi
+
+# Format the description HTML
+DESCRIPTION_HTML=$(format_release_notes_html "$TAG_NAME" "$RELEASE_NOTES")
+
 # Generate new appcast entry
 cat > new_entry.xml << EOF
         <item>
             <title>Version $TAG_NAME</title>
             <link>https://github.com/epilande/Annotate/releases/tag/$TAG_NAME</link>
             <description><![CDATA[
-<h2>🚀 Annotate $TAG_NAME</h2>
-
-<p>See the <a href="https://github.com/epilande/Annotate/releases/tag/$TAG_NAME">full changelog</a> for details.</p>
+$DESCRIPTION_HTML
             ]]></description>
             <pubDate>$PUB_DATE</pubDate>
             <enclosure url="$DOWNLOAD_URL"
