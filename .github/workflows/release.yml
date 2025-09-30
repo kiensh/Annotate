@@ -98,7 +98,8 @@ jobs:
           
           echo "📦 Creating ZIP archive: $ZIP_NAME"
           rm -f "$ZIP_PATH"
-          (cd "$EXPORT_DIR" && zip -r "../$ZIP_NAME" "$APP_NAME.app")
+          # Use ditto to preserve extended attributes (including notarization ticket)
+          ditto -c -k --keepParent "$EXPORT_DIR/$APP_NAME.app" "$ZIP_PATH"
           echo "✅ ZIP created: $ZIP_PATH ($(stat -f%z "$ZIP_PATH") bytes)"
 
       - name: Notarize app bundle
@@ -126,7 +127,8 @@ jobs:
           # Update ZIP with stapled notarization
           echo "📦 Updating ZIP with stapled notarization..."
           rm -f "$ZIP_PATH"
-          (cd "$EXPORT_DIR" && zip -r "../$ZIP_NAME" "$APP_NAME.app")
+          # Use ditto to preserve extended attributes (including stapled notarization ticket)
+          ditto -c -k --keepParent "$EXPORT_DIR/$APP_NAME.app" "$ZIP_PATH"
           echo "✅ ZIP updated: $ZIP_PATH ($(stat -f%z "$ZIP_PATH") bytes)"
 
       - name: Package DMG from notarized app
