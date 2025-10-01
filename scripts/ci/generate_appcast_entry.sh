@@ -72,18 +72,17 @@ format_release_notes_html() {
     local tag_name="$1"
     local release_notes="$2"
     
+    echo "<h1>Annotate $tag_name</h1>"
+    echo ""
+    
     if [ -n "$release_notes" ]; then
-        echo "<h2>🚀 Annotate $tag_name</h2>"
-        echo ""
-        
         # Convert markdown to basic HTML and filter out existing "Full Changelog" lines
         convert_markdown_to_html "$release_notes" | grep -v "Full Changelog"
-    else
-        # Fallback to simple description
-        echo "<h2>🚀 Annotate $tag_name</h2>"
         echo ""
-        echo "<p>See the <a href=\"https://github.com/epilande/Annotate/releases/tag/$tag_name\">full changelog</a> for details.</p>"
     fi
+    
+    # Always show the full changelog link
+    echo "<p>See the <a href=\"https://github.com/epilande/Annotate/releases/tag/$tag_name\">full changelog</a> for details.</p>"
 }
 
 if [ $# -lt 6 ] || [ $# -gt 7 ]; then
