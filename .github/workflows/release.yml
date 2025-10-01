@@ -12,7 +12,7 @@ jobs:
   build-sign-notarize-release:
     name: Build → Sign → Notarize → Release
     runs-on: macos-15
-    timeout-minutes: 8
+    timeout-minutes: 15
     environment: release
     env:
       APP_NAME: Annotate
@@ -150,72 +150,11 @@ jobs:
           DMG_PATH=$(./packaging/make_dmg.sh)
           echo "DMG_PATH=$DMG_PATH" >> $GITHUB_ENV
 
-      - name: Download Sparkle tools
-        run: |
-          SPARKLE_VERSION="2.8.0"
-          SPARKLE_URL="https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_VERSION}/Sparkle-${SPARKLE_VERSION}.tar.xz"
-          echo "Downloading Sparkle tools from: $SPARKLE_URL"
-          curl -L "$SPARKLE_URL" | tar -xJ
-          if [ ! -x "./bin/sign_update" ]; then
-            echo "❌ sign_update binary not found or not executable"
-            exit 1
-          fi
-          echo "✅ Sparkle tools downloaded and extracted"
-
       - name: Sign Sparkle update
         run: |
-          # Verify ZIP file exists
-          if [ ! -f "$ZIP_PATH" ]; then
-            echo "❌ ZIP file not found at: $ZIP_PATH"
-            exit 1
-          fi
-          echo "✅ ZIP file found: $ZIP_PATH ($(stat -f%z "$ZIP_PATH") bytes)"
-          
-          # Check if SPARKLE_PRIVATE_KEY secret exists
-          if [ -z "${{ secrets.SPARKLE_PRIVATE_KEY }}" ]; then
-            echo "❌ SPARKLE_PRIVATE_KEY secret is not set"
-            exit 1
-          fi
-          
-          # Create secure temporary file for private key
-          PRIVATE_KEY_FILE=$(mktemp)
-          trap "rm -f '$PRIVATE_KEY_FILE'" EXIT
-          
-          # Write private key to secure temp file
-          echo "${{ secrets.SPARKLE_PRIVATE_KEY }}" > "$PRIVATE_KEY_FILE"
-          chmod 600 "$PRIVATE_KEY_FILE"
-          
-          # Verify private key file was created
-          if [ ! -f "$PRIVATE_KEY_FILE" ] || [ ! -s "$PRIVATE_KEY_FILE" ]; then
-            echo "❌ Private key file creation failed"
-            exit 1
-          fi
-          echo "✅ Private key file created securely"
-          
-          # Verify sign_update binary
-          if [ ! -x "./bin/sign_update" ]; then
-            echo "❌ sign_update binary not found or not executable"
-            exit 1
-          fi
-          echo "✅ sign_update binary found"
-          
-          # Sign the ZIP file with error handling
-          echo "Signing ZIP file..."
-          if SIGNATURE_OUTPUT=$(./bin/sign_update "$ZIP_PATH" -f "$PRIVATE_KEY_FILE" 2>&1); then
-            # Extract just the signature value from the output
-            # The output format is: sparkle:edSignature="SIGNATURE_VALUE" length="SIZE"
-            SIGNATURE_VALUE=$(echo "$SIGNATURE_OUTPUT" | grep -o 'sparkle:edSignature="[^"]*"' | sed 's/sparkle:edSignature="//;s/"//')
-            echo "SPARKLE_SIGNATURE=$SIGNATURE_VALUE" >> $GITHUB_ENV
-            echo "✅ Sparkle update signed successfully"
-            echo "Signature: $SIGNATURE_VALUE"
-            echo "Full output: $SIGNATURE_OUTPUT"
-          else
-            echo "❌ Sparkle signing failed with error:"
-            echo "$SIGNATURE_OUTPUT"
-            exit 1
-          fi
-          
-          # Private key cleanup handled by trap
+          chmod +x scripts/ci/sign_sparkle_update.sh
+          SPARKLE_SIGNATURE=$(./scripts/ci/sign_sparkle_update.sh "$ZIP_PATH" "${{ secrets.SPARKLE_PRIVATE_KEY }}")
+          echo "SPARKLE_SIGNATURE=$SPARKLE_SIGNATURE" >> $GITHUB_ENV
 
       - name: Calculate ZIP file size
         run: |

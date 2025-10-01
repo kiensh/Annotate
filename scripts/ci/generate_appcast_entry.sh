@@ -76,8 +76,10 @@ format_release_notes_html() {
     echo ""
     
     if [ -n "$release_notes" ]; then
-        # Convert markdown to basic HTML and filter out existing "Full Changelog" lines
-        convert_markdown_to_html "$release_notes" | grep -v "Full Changelog"
+        # Convert to HTML first, then filter out New Contributors section and Full Changelog
+        convert_markdown_to_html "$release_notes" | \
+            sed '/New Contributors/,/<\/ul>/d' | \
+            grep -v "Full Changelog"
         echo ""
     fi
     
