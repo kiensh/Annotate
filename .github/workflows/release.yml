@@ -40,8 +40,11 @@ jobs:
           TAG="${GITHUB_REF#refs/tags/}"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "semver=${TAG#v}" >> "$GITHUB_OUTPUT"
-          # Generate build number from version (remove dots and dashes, keep alphanumeric)
-          BUILD_NUMBER=$(echo "${TAG#v}" | sed 's/[.-]//g')
+          # Generate build number from version (keep only digits, fallback to "1" if empty)
+          BUILD_NUMBER=$(echo "${TAG#v}" | sed 's/[^0-9]//g')
+          if [ -z "$BUILD_NUMBER" ]; then
+            BUILD_NUMBER="1"
+          fi
           echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
 
       - name: Install dependencies

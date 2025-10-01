@@ -5,29 +5,5 @@
         <link>https://github.com/epilande/Annotate</link>
         <description>Annotate App Updates</description>
         <language>en</language>
-        <item>
-            <title>Version v1.0.6</title>
-            <link>https://github.com/epilande/Annotate/releases/tag/v1.0.6</link>
-            <description><![CDATA[
-<h2>🚀 Annotate v1.0.6</h2>
-
-<h3>Bug Fixes</h3>
-<ul>
-<li>Fixed color picker popover reference to enable repeated usage</li>
-</ul>
-
-<h3>Infrastructure</h3>
-<ul>
-<li>Added automated macOS release workflow</li>
-<li>Added GitHub Actions workflow for automated testing</li>
-</ul>
-            ]]></description>
-            <pubDate>Sun, 15 Sep 2025 11:27:57 -0700</pubDate>
-            <enclosure url="https://github.com/epilande/Annotate/releases/download/v1.0.6/Annotate.dmg"
-                       sparkle:version="106"
-                       sparkle:shortVersionString="1.0.6"
-                       length="3512042"
-                       type="application/octet-stream" />
-        </item>
     </channel>
 </rss>
