@@ -20,7 +20,7 @@ jobs:
       CONFIG: Release
       ARCHIVE_PATH: build/Annotate.xcarchive
       EXPORT_DIR: build/export
-      EXPORT_PLIST: packaging/ExportOptions.plist
+      EXPORT_PLIST: scripts/packaging/ExportOptions.plist
 
     steps:
       - name: Checkout
@@ -148,9 +148,9 @@ jobs:
 
       - name: Package DMG from notarized app
         run: |
-          chmod +x packaging/make_dmg.sh
+          chmod +x scripts/packaging/make_dmg.sh
           export MARKETING_VERSION="${{ steps.version.outputs.semver }}"
-          DMG_PATH=$(./packaging/make_dmg.sh)
+          DMG_PATH=$(./scripts/packaging/make_dmg.sh)
           echo "DMG_PATH=$DMG_PATH" >> $GITHUB_ENV
 
       - name: Sign Sparkle update
