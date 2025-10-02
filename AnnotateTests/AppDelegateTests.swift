@@ -117,6 +117,16 @@ final class AppDelegateTests: XCTestCase, Sendable {
             return
         }
 
+        // Ensure window starts visible - toggle until visible with timeout
+        let maxAttempts = 10
+        var attempts = 0
+        while !overlayWindow.isVisible && attempts < maxAttempts {
+            appDelegate.toggleOverlay()
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+            attempts += 1
+        }
+        XCTAssertTrue(overlayWindow.isVisible, "Window failed to become visible after \(maxAttempts) attempts")
+
         let testPath = DrawingPath(
             points: [
                 TimedPoint(point: NSPoint(x: 0, y: 0), timestamp: 0)
@@ -133,16 +143,16 @@ final class AppDelegateTests: XCTestCase, Sendable {
         XCTAssertEqual(overlayWindow.overlayView.arrows.count, 1)
         XCTAssertEqual(overlayWindow.overlayView.lines.count, 1)
 
-        // Toggle overlay
+        // Toggle overlay off
         appDelegate.toggleOverlay()
 
-        // Toggle it back on
+        // Toggle it back on - should clear drawings because clearDrawingsOnStartKey is true
         appDelegate.toggleOverlay()
 
         // Verify drawings were cleared
-        XCTAssertEqual(overlayWindow.overlayView.paths.count, 0)
-        XCTAssertEqual(overlayWindow.overlayView.arrows.count, 0)
-        XCTAssertEqual(overlayWindow.overlayView.lines.count, 0)
+        XCTAssertEqual(overlayWindow.overlayView.paths.count, 0, "Paths should be cleared")
+        XCTAssertEqual(overlayWindow.overlayView.arrows.count, 0, "Arrows should be cleared")
+        XCTAssertEqual(overlayWindow.overlayView.lines.count, 0, "Lines should be cleared")
     }
 
     func testToggleOverlayPreservesDrawingsWhenDisabled() {
