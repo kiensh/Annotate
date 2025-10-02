@@ -208,7 +208,7 @@ jobs:
             echo "No changes to appcast.xml"
           else
             git commit -m "chore: Update appcast.xml for release ${{ steps.version.outputs.tag }}"
-            git push origin HEAD:auto-update
+            git push origin HEAD:main
             echo "✅ Committed updated appcast.xml"
           fi
 

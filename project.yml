@@ -22,7 +22,7 @@ targets:
         SWIFT_VERSION: "5.0"
         MACOSX_DEPLOYMENT_TARGET: "15.2"
         INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.productivity"
-        INFOPLIST_KEY_SUFeedURL: "https://raw.githubusercontent.com/epilande/Annotate/auto-update/appcast.xml"
+        INFOPLIST_KEY_SUFeedURL: "https://raw.githubusercontent.com/epilande/Annotate/main/appcast.xml"
         INFOPLIST_KEY_SUPublicEDKey: "zKs810UVligBC4LdTPa0TXY4P7R6jtg7ZjjeQX1ULLk="
         INFOPLIST_KEY_SUEnableAutomaticChecks: true
         INFOPLIST_KEY_SUScheduledCheckInterval: 86400
