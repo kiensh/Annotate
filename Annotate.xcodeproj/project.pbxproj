@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		00A87D0DC766FB5E16761B12 /* NSImage+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A043765B3A5CA07299E2E39E /* NSImage+Extensions.swift */; };
 		0B35AA348D555D8D37B1F98C /* Array+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 847AFBC80865F7D45C998B53 /* Array+Extensions.swift */; };
+		0C164AA92D3E0F1F3B8D7405 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D60C4A5DE239DEC5D5B5B064 /* AboutView.swift */; };
 		175889B3CA729724FB6707D7 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6903AD70B770B730044017F1 /* SettingsView.swift */; };
 		1EFDEFDAAF15DD6A34D8CF1E /* NSImageExtensionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946F5E92DE3DAF1A47E3F28E /* NSImageExtensionsTests.swift */; };
 		1F730C2DD22A0251DAB56212 /* BoardManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9665DE19443CE9027FF350BB /* BoardManagerTests.swift */; };
@@ -87,6 +88,7 @@
 		BB884F7F089018164D393F50 /* OverlayViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayViewTests.swift; sourceTree = "<group>"; };
 		C220E9F2F9DD6761437493BD /* SettingsViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewTests.swift; sourceTree = "<group>"; };
 		CEB85F9E9B91B73476A5B856 /* ModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelTests.swift; sourceTree = "<group>"; };
+		D60C4A5DE239DEC5D5B5B064 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		E865CFE434705E22A18BA8F8 /* ShortcutField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutField.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -106,6 +108,7 @@
 		0ECAD32CBFD2E77335450945 /* Annotate */ = {
 			isa = PBXGroup;
 			children = (
+				D60C4A5DE239DEC5D5B5B064 /* AboutView.swift */,
 				142344E46B3DD21523EF35D5 /* Annotate.entitlements */,
 				0C61EAA8724E674065B5FD4D /* AnnotateApp.swift */,
 				7FFDF41C9B21C6AFA821B267 /* AppDelegate.swift */,
@@ -289,6 +292,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0C164AA92D3E0F1F3B8D7405 /* AboutView.swift in Sources */,
 				419164A32BDCBD498FDBFE27 /* AnnotateApp.swift in Sources */,
 				34ED549A54B74AB82408795F /* AppDelegate.swift in Sources */,
 				0B35AA348D555D8D37B1F98C /* Array+Extensions.swift in Sources */,
