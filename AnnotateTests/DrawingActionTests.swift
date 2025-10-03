@@ -9,7 +9,7 @@ final class DrawingActionTests: XCTestCase {
         let path = DrawingPath(
             points: [
                 TimedPoint(point: .zero, timestamp: 0.0)
-            ], color: .systemRed)
+            ], color: .systemRed, lineWidth: 3.0)
 
         let action = DrawingAction.addPath(path)
 
@@ -22,7 +22,7 @@ final class DrawingActionTests: XCTestCase {
     }
 
     func testAddArrowAction() {
-        let arrow = Arrow(startPoint: .zero, endPoint: NSPoint(x: 10, y: 10), color: .blue)
+        let arrow = Arrow(startPoint: .zero, endPoint: NSPoint(x: 10, y: 10), color: .blue, lineWidth: 3.0)
         let action = DrawingAction.addArrow(arrow)
 
         if case .addArrow(let actionArrow) = action {
@@ -35,7 +35,7 @@ final class DrawingActionTests: XCTestCase {
     }
     
     func testAddLineAction() {
-        let line = Line(startPoint: .zero, endPoint: NSPoint(x: 10, y: 10), color: .red)
+        let line = Line(startPoint: .zero, endPoint: NSPoint(x: 10, y: 10), color: .red, lineWidth: 3.0)
         let action = DrawingAction.addLine(line)
         
         if case .addLine(let actionLine) = action {
@@ -48,7 +48,7 @@ final class DrawingActionTests: XCTestCase {
     }
     
     func testRemoveLineAction() {
-        let line = Line(startPoint: .zero, endPoint: NSPoint(x: 20, y: 20), color: .green)
+        let line = Line(startPoint: .zero, endPoint: NSPoint(x: 20, y: 20), color: .green, lineWidth: 3.0)
         let action = DrawingAction.removeLine(line)
         
         if case .removeLine(let actionLine) = action {
@@ -113,12 +113,12 @@ final class DrawingActionTests: XCTestCase {
     }
 
     func testClearAllWithCounters() {
-        let paths = [DrawingPath(points: [], color: .systemRed)]
-        let arrows = [Arrow(startPoint: .zero, endPoint: .zero, color: .blue)]
-        let lines = [Line(startPoint: .zero, endPoint: .zero, color: .red)]
-        let highlights = [DrawingPath(points: [], color: .yellow)]
-        let rectangles = [Rectangle(startPoint: .zero, endPoint: .zero, color: .green)]
-        let circles = [Circle(startPoint: .zero, endPoint: .zero, color: .purple)]
+        let paths = [DrawingPath(points: [], color: .systemRed, lineWidth: 3.0)]
+        let arrows = [Arrow(startPoint: .zero, endPoint: .zero, color: .blue, lineWidth: 3.0)]
+        let lines = [Line(startPoint: .zero, endPoint: .zero, color: .red, lineWidth: 3.0)]
+        let highlights = [DrawingPath(points: [], color: .yellow, lineWidth: 3.0)]
+        let rectangles = [Rectangle(startPoint: .zero, endPoint: .zero, color: .green, lineWidth: 3.0)]
+        let circles = [Circle(startPoint: .zero, endPoint: .zero, color: .purple, lineWidth: 3.0)]
         let texts = [TextAnnotation(text: "Test", position: .zero, color: .black, fontSize: 12)]
         let counters = [CounterAnnotation(number: 1, position: .zero, color: .orange)]
 
@@ -143,12 +143,12 @@ final class DrawingActionTests: XCTestCase {
     }
 
     func testClearAllAction() {
-        let paths = [DrawingPath(points: [], color: .systemRed)]
-        let arrows = [Arrow(startPoint: .zero, endPoint: .zero, color: .blue)]
-        let lines = [Line(startPoint: .zero, endPoint: .zero, color: .red)]
-        let highlights = [DrawingPath(points: [], color: .yellow)]
-        let rectangles = [Rectangle(startPoint: .zero, endPoint: .zero, color: .green)]
-        let circles = [Circle(startPoint: .zero, endPoint: .zero, color: .purple)]
+        let paths = [DrawingPath(points: [], color: .systemRed, lineWidth: 3.0)]
+        let arrows = [Arrow(startPoint: .zero, endPoint: .zero, color: .blue, lineWidth: 3.0)]
+        let lines = [Line(startPoint: .zero, endPoint: .zero, color: .red, lineWidth: 3.0)]
+        let highlights = [DrawingPath(points: [], color: .yellow, lineWidth: 3.0)]
+        let rectangles = [Rectangle(startPoint: .zero, endPoint: .zero, color: .green, lineWidth: 3.0)]
+        let circles = [Circle(startPoint: .zero, endPoint: .zero, color: .purple, lineWidth: 3.0)]
         let texts = [TextAnnotation(text: "Test", position: .zero, color: .black, fontSize: 12)]
         let counters = [CounterAnnotation(number: 1, position: .zero, color: .black)]
 

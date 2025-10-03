@@ -9,9 +9,10 @@ final class ModelTests: XCTestCase {
         let start = NSPoint(x: 0, y: 0)
         let end = NSPoint(x: 100, y: 100)
         let color = NSColor.blue
+        let lineWidth: CGFloat = 3.0
         let time: CFTimeInterval = 1.0
 
-        let arrow = Arrow(startPoint: start, endPoint: end, color: color, creationTime: time)
+        let arrow = Arrow(startPoint: start, endPoint: end, color: color, lineWidth: lineWidth, creationTime: time)
 
         XCTAssertEqual(arrow.startPoint, start)
         XCTAssertEqual(arrow.endPoint, end)
@@ -19,7 +20,7 @@ final class ModelTests: XCTestCase {
         XCTAssertEqual(arrow.creationTime, time)
 
         // Test nil creation time
-        let arrowNoTime = Arrow(startPoint: start, endPoint: end, color: color)
+        let arrowNoTime = Arrow(startPoint: start, endPoint: end, color: color, lineWidth: lineWidth)
         XCTAssertNil(arrowNoTime.creationTime)
     }
 
@@ -27,10 +28,11 @@ final class ModelTests: XCTestCase {
         let start = NSPoint(x: 10, y: 10)
         let end = NSPoint(x: 50, y: 50)
         let color = NSColor.green
+        let lineWidth: CGFloat = 2.5
         let time: CFTimeInterval = 2.0
 
         let rectangle = Rectangle(
-            startPoint: start, endPoint: end, color: color, creationTime: time)
+            startPoint: start, endPoint: end, color: color, lineWidth: lineWidth, creationTime: time)
 
         XCTAssertEqual(rectangle.startPoint, start)
         XCTAssertEqual(rectangle.endPoint, end)
@@ -42,9 +44,10 @@ final class ModelTests: XCTestCase {
         let start = NSPoint(x: 100, y: 100)
         let end = NSPoint(x: 200, y: 200)
         let color = NSColor.yellow
+        let lineWidth: CGFloat = 4.0
         let time: CFTimeInterval = 3.0
 
-        let circle = Circle(startPoint: start, endPoint: end, color: color, creationTime: time)
+        let circle = Circle(startPoint: start, endPoint: end, color: color, lineWidth: lineWidth, creationTime: time)
 
         XCTAssertEqual(circle.startPoint, start)
         XCTAssertEqual(circle.endPoint, end)

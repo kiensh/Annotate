@@ -71,12 +71,12 @@ final class OverlayViewTests: XCTestCase, Sendable {
 
     func testClearAll() {
         // Add some test data
-        overlayView.paths = [DrawingPath(points: [], color: .red)]
-        overlayView.arrows = [Arrow(startPoint: .zero, endPoint: .zero, color: .blue)]
-        overlayView.lines = [Line(startPoint: .zero, endPoint: .zero, color: .red)]
-        overlayView.highlightPaths = [DrawingPath(points: [], color: .yellow)]
-        overlayView.rectangles = [Rectangle(startPoint: .zero, endPoint: .zero, color: .green)]
-        overlayView.circles = [Circle(startPoint: .zero, endPoint: .zero, color: .purple)]
+        overlayView.paths = [DrawingPath(points: [], color: .red, lineWidth: 3.0)]
+        overlayView.arrows = [Arrow(startPoint: .zero, endPoint: .zero, color: .blue, lineWidth: 3.0)]
+        overlayView.lines = [Line(startPoint: .zero, endPoint: .zero, color: .red, lineWidth: 3.0)]
+        overlayView.highlightPaths = [DrawingPath(points: [], color: .yellow, lineWidth: 3.0)]
+        overlayView.rectangles = [Rectangle(startPoint: .zero, endPoint: .zero, color: .green, lineWidth: 3.0)]
+        overlayView.circles = [Circle(startPoint: .zero, endPoint: .zero, color: .purple, lineWidth: 3.0)]
         overlayView.textAnnotations = [
             TextAnnotation(text: "Test", position: .zero, color: .black, fontSize: 12)
         ]
@@ -98,7 +98,7 @@ final class OverlayViewTests: XCTestCase, Sendable {
         // Create a new line
         let startPoint = NSPoint(x: 100, y: 100)
         let endPoint = NSPoint(x: 200, y: 200)
-        let line = Line(startPoint: startPoint, endPoint: endPoint, color: .systemBlue)
+        let line = Line(startPoint: startPoint, endPoint: endPoint, color: .systemBlue, lineWidth: 3.0)
         
         // Add it to the view
         overlayView.lines.append(line)
@@ -122,6 +122,7 @@ final class OverlayViewTests: XCTestCase, Sendable {
             startPoint: NSPoint(x: 100, y: 100),
             endPoint: NSPoint(x: 200, y: 200),
             color: .systemBlue,
+            lineWidth: 3.0,
             creationTime: now
         )
         
@@ -136,6 +137,7 @@ final class OverlayViewTests: XCTestCase, Sendable {
             startPoint: NSPoint(x: 300, y: 300),
             endPoint: NSPoint(x: 400, y: 400),
             color: .systemRed,
+            lineWidth: 3.0,
             creationTime: now - 10.0 // Way beyond fade duration
         )
         
