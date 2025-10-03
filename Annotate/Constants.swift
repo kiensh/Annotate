@@ -3,6 +3,7 @@ import KeyboardShortcuts
 
 extension KeyboardShortcuts.Name {
     static let toggleOverlay = Self("toggleOverlay")
+    static let toggleAlwaysOnMode = Self("toggleAlwaysOnMode")
 }
 
 extension UserDefaults {
@@ -11,4 +12,5 @@ extension UserDefaults {
     static let fadeModeKey = "FadeMode"
     static let enableBoardKey = "EnableBoard"
     static let boardOpacityKey = "BoardOpacity"
+    static let alwaysOnModeKey = "AlwaysOnMode"
 }
