@@ -39,6 +39,6 @@
 	<key>SUEnableInstallerLauncherService</key>
 	<true/>
 	<key>SUEnableDownloaderService</key>
-	<false/>
+	<true/>
 </dict>
 </plist>
