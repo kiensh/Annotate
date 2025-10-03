@@ -474,4 +474,51 @@ class OverlayWindow: NSWindow {
             anchorPoint = NSPoint(x: boundingRect.midX, y: boundingRect.midY)
         }
     }
+    
+    override func scrollWheel(with event: NSEvent) {
+        // Check if Command key is pressed
+        let cmdPressed = event.modifierFlags.contains(.command)
+        
+        if cmdPressed {
+            // Adjust line width with Command + Scroll
+            let minLineWidth: CGFloat = 0.5
+            let maxLineWidth: CGFloat = 20.0
+            let ratio: CGFloat = 0.25
+            
+            // Get scroll delta (negative means scroll up, positive means scroll down)
+            let scrollDelta = event.scrollingDeltaY
+            
+            // Determine direction and amount
+            let increment: CGFloat = scrollDelta > 0 ? ratio : -ratio
+            
+            // Get current line width
+            let currentWidth = overlayView.currentLineWidth
+            
+            // Calculate new width
+            var newWidth = currentWidth + increment
+            
+            // Round to nearest ratio increment
+            newWidth = round(newWidth / ratio) * ratio
+            
+            // Clamp to min/max
+            newWidth = max(minLineWidth, min(maxLineWidth, newWidth))
+            
+            // Only update if value changed
+            if newWidth != currentWidth {
+                // Update the line width globally
+                overlayView.currentLineWidth = newWidth
+                
+                // Save to UserDefaults
+                UserDefaults.standard.set(Double(newWidth), forKey: UserDefaults.lineWidthKey)
+                
+                // Apply to all overlay windows
+                AppDelegate.shared?.overlayWindows.values.forEach { window in
+                    window.overlayView.currentLineWidth = newWidth
+                }
+            }
+        } else {
+            // Default scroll behavior
+            super.scrollWheel(with: event)
+        }
+    }
 }
