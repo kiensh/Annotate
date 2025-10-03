@@ -1,5 +1,6 @@
 import Carbon
 import Cocoa
+import Sparkle
 import SwiftUI
 
 @MainActor
@@ -12,6 +13,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
     var hotkeyMonitor: Any?
     var overlayWindows: [NSScreen: OverlayWindow] = [:]
     var settingsWindow: NSWindow?
+    var aboutWindow: NSWindow?
+    var updaterController: SPUStandardUpdaterController!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppDelegate.shared = self
@@ -38,6 +41,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
         }
 
         setupBoardObservers()
+        
+        // Initialize Sparkle updater (uses Info.plist configuration)
+        updaterController = SPUStandardUpdaterController(
+            startingUpdater: true,
+            updaterDelegate: nil,
+            userDriverDelegate: nil
+        )
+        
+        // Override the default About menu item
+        setupApplicationMenu()
     }
 
     @MainActor
@@ -193,11 +206,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             menu.addItem(NSMenuItem.separator())
 
             let settingsItem = NSMenuItem(
-                title: "Settings",
+                title: "Settings...",
                 action: #selector(showSettings),
                 keyEquivalent: ",")
             settingsItem.keyEquivalentModifierMask = [.command]
             menu.addItem(settingsItem)
+
+            let checkForUpdatesItem = NSMenuItem(
+                title: "Check for Updates...",
+                action: #selector(checkForUpdates),
+                keyEquivalent: "")
+            menu.addItem(checkForUpdatesItem)
 
             menu.addItem(NSMenuItem.separator())
 
@@ -586,6 +605,55 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
 
         // Set the composite image to the status bar button
         statusItem.button?.image = compositeImage
+    }
+    
+    func setupApplicationMenu() {
+        // Find the application menu (first submenu in the main menu bar)
+        guard let mainMenu = NSApp.mainMenu,
+              let appMenuItem = mainMenu.items.first,
+              let appMenu = appMenuItem.submenu else {
+            return
+        }
+        
+        // Find and replace the About menu item
+        for item in appMenu.items {
+            if item.title.hasPrefix("About") {
+                item.target = self
+                item.action = #selector(showAbout)
+                break
+            }
+        }
+    }
+    
+    @objc func showAbout() {
+        if aboutWindow == nil {
+            let aboutView = AboutView(updaterController: updaterController)
+            let hostingController = NSHostingController(rootView: aboutView)
+            
+            aboutWindow = NSWindow(
+                contentRect: NSRect(x: 0, y: 0, width: 320, height: 400),
+                styleMask: [.titled, .closable],
+                backing: .buffered,
+                defer: false
+            )
+            aboutWindow?.contentViewController = hostingController
+            aboutWindow?.title = "About Annotate"
+            aboutWindow?.isReleasedWhenClosed = false
+            aboutWindow?.delegate = self
+        }
+        
+        aboutWindow?.makeKeyAndOrderFront(nil)
+        
+        // Center after the window is shown to ensure proper sizing
+        DispatchQueue.main.async {
+            self.aboutWindow?.center()
+        }
+        
+        NSApp.activate(ignoringOtherApps: true)
+    }
+    
+    @objc func checkForUpdates() {
+        updaterController.checkForUpdates(nil)
     }
 
     func updateMenuKeyEquivalents() {
