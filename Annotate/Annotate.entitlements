@@ -14,5 +14,12 @@
 	<false/>
 	<key>com.apple.security.cs.disable-library-validation</key>
 	<false/>
+	<key>com.apple.security.network.client</key>
+	<true/>
+	<key>com.apple.security.temporary-exception.mach-lookup.global-name</key>
+	<array>
+		<string>com.epilande.Annotate-spks</string>
+		<string>com.epilande.Annotate-spki</string>
+	</array>
 </dict>
 </plist>

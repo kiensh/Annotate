@@ -123,6 +123,16 @@ final class AppDelegateTests: XCTestCase, Sendable {
             return
         }
 
+        // Ensure window starts visible - toggle until visible with timeout
+        let maxAttempts = 10
+        var attempts = 0
+        while !overlayWindow.isVisible && attempts < maxAttempts {
+            appDelegate.toggleOverlay()
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+            attempts += 1
+        }
+        XCTAssertTrue(overlayWindow.isVisible, "Window failed to become visible after \(maxAttempts) attempts")
+
         let testPath = DrawingPath(
             points: [
                 TimedPoint(point: NSPoint(x: 0, y: 0), timestamp: 0)
@@ -139,19 +149,15 @@ final class AppDelegateTests: XCTestCase, Sendable {
         XCTAssertEqual(overlayWindow.overlayView.arrows.count, 1)
         XCTAssertEqual(overlayWindow.overlayView.lines.count, 1)
 
-        // Test requires overlay show/hide cycle to trigger clearDrawingsOnStart behavior
-        overlayWindow.makeKeyAndOrderFront(nil)
-        XCTAssertTrue(overlayWindow.isVisible, "Overlay should be visible")
+        // Toggle overlay off
+        appDelegate.toggleOverlay()
 
-        overlayWindow.orderOut(nil)
-        XCTAssertFalse(overlayWindow.isVisible, "Overlay should be hidden")
-        
-        // Direct test of clearing logic since toggleOverlay() has UI dependencies
-        overlayWindow.overlayView.clearAll()
+        // Toggle it back on - should clear drawings because clearDrawingsOnStartKey is true
+        appDelegate.toggleOverlay()
 
-        // Drawings should be cleared due to clearDrawingsOnStart setting
+        // Verify drawings were cleared
         XCTAssertEqual(overlayWindow.overlayView.paths.count, 0, "Paths should be cleared")
-        XCTAssertEqual(overlayWindow.overlayView.arrows.count, 0, "Arrows should be cleared")  
+        XCTAssertEqual(overlayWindow.overlayView.arrows.count, 0, "Arrows should be cleared")
         XCTAssertEqual(overlayWindow.overlayView.lines.count, 0, "Lines should be cleared")
     }
 

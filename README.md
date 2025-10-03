@@ -32,6 +32,7 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 - 🧹 **Auto-Clear Option:** Automatically clear all drawings when toggling the overlay.
 - ⌨️ **Keyboard Shortcuts:** Switch between modes and toggle the overlay with customizable keyboard shortcuts.
 - ⚡ **Global Hotkey:** Toggle Annotate with a global shortcut.
+- 🔄 **Auto-Updates:** Automatic update checking with secure, cryptographically signed updates.
 
 ## 📦 Installation
 
@@ -40,11 +41,16 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 1. **Download the Application:**
 
    - Go to [latest release](https://github.com/epilande/Annotate/releases/latest) page.
-   - Download `Annotate.zip` file.
+   - Download the `Annotate-x.x.x.dmg` file for easy installation, or `Annotate-x.x.x.zip` for manual installation.
 
 2. **Install the Application:**
 
-   - Unzip the downloaded `Annotate.zip` file.
+   **Using DMG (Recommended):**
+   - Open the downloaded `Annotate-x.x.x.dmg` file.
+   - Drag the `Annotate.app` into your **Applications** folder.
+
+   **Using ZIP:**
+   - Unzip the downloaded `Annotate-x.x.x.zip` file.
    - Drag the `Annotate.app` file into your **Applications** folder.
 
 3. **Run the Application:**
@@ -54,8 +60,7 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 > [!NOTE]
 > Make sure your macOS version is 15 or later.
 >
-> The app isn't signed with an Apple developer certificate.
-> You'll need to authorize the app through System Settings → Privacy & Security by clicking "Open Anyway" or see below to build it from source.
+> The app is code-signed and notarized for macOS Gatekeeper compatibility.
 
 ### Build from Source
 
@@ -193,3 +198,13 @@ Access the Settings panel from the menu bar icon or by pressing <kbd>Command</kb
 Customize keyboard shortcuts for all drawing tools by assigning individual shortcut keys for each tool (pen, arrow, highlighter, etc.).
 
 <img width="472" alt="image" src="https://github.com/user-attachments/assets/37d3498b-baa8-4fa5-93b0-6d2f8cc9246d" />
+
+## 🔄 Auto-Updates
+
+Annotate includes automatic update checking powered by [Sparkle](https://sparkle-project.org/):
+
+- **Automatic Checks**: The app checks for updates once per day.
+- **Manual Check**: Select **Check for Updates...** from the menu bar or use the About window.
+- **Secure Updates**: All updates are cryptographically signed and verified before installation.
+
+Updates are downloaded and installed seamlessly in the background. You'll be notified when a new version is available, with release notes and the option to install immediately or later.
