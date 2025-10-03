@@ -171,24 +171,26 @@ class OverlayWindow: NSWindow {
             let t = CACurrentMediaTime()
             overlayView.currentPath = DrawingPath(
                 points: [TimedPoint(point: startPoint, timestamp: t)],
-                color: currentColor)
+                color: currentColor,
+                lineWidth: overlayView.currentLineWidth)
         case .arrow:
             overlayView.currentArrow = Arrow(
-                startPoint: startPoint, endPoint: startPoint, color: currentColor)
+                startPoint: startPoint, endPoint: startPoint, color: currentColor, lineWidth: overlayView.currentLineWidth, creationTime: nil)
         case .line:
             overlayView.currentLine = Line(
-                startPoint: startPoint, endPoint: startPoint, color: currentColor)
+                startPoint: startPoint, endPoint: startPoint, color: currentColor, lineWidth: overlayView.currentLineWidth, creationTime: nil)
         case .highlighter:
             let t = CACurrentMediaTime()
             overlayView.currentHighlight = DrawingPath(
                 points: [TimedPoint(point: startPoint, timestamp: t)],
-                color: currentColor.withAlphaComponent(0.3))
+                color: currentColor.withAlphaComponent(0.3),
+                lineWidth: overlayView.currentLineWidth)
         case .rectangle:
             overlayView.currentRectangle = Rectangle(
-                startPoint: startPoint, endPoint: startPoint, color: overlayView.currentColor)
+                startPoint: startPoint, endPoint: startPoint, color: overlayView.currentColor, lineWidth: overlayView.currentLineWidth, creationTime: nil)
         case .circle:
             overlayView.currentCircle = Circle(
-                startPoint: startPoint, endPoint: startPoint, color: overlayView.currentColor)
+                startPoint: startPoint, endPoint: startPoint, color: overlayView.currentColor, lineWidth: overlayView.currentLineWidth, creationTime: nil)
         case .text:
             break
         case .counter:
@@ -399,6 +401,9 @@ class OverlayWindow: NSWindow {
                 return
             case ShortcutManager.shared.getShortcut(for: .colorPicker):
                 AppDelegate.shared?.showColorPicker(nil)
+                return
+            case ShortcutManager.shared.getShortcut(for: .lineWidthPicker):
+                AppDelegate.shared?.showLineWidthPicker(nil)
                 return
             case ShortcutManager.shared.getShortcut(for: .toggleBoard):
                 AppDelegate.shared?.toggleBoardVisibility(nil)
