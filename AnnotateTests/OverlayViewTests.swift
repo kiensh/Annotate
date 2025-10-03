@@ -108,6 +108,7 @@ final class OverlayViewTests: XCTestCase, Sendable {
         XCTAssertEqual(overlayView.lines[0].startPoint, startPoint)
         XCTAssertEqual(overlayView.lines[0].endPoint, endPoint)
         XCTAssertEqual(overlayView.lines[0].color, .systemBlue)
+        XCTAssertEqual(overlayView.lines[0].lineWidth, 3.0)
         
         // Test delete last item when tool is line
         overlayView.currentTool = .line

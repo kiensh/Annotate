@@ -16,6 +16,7 @@ final class DrawingActionTests: XCTestCase {
         if case .addPath(let actionPath) = action {
             XCTAssertEqual(actionPath.points, path.points)
             XCTAssertEqual(actionPath.color, path.color)
+            XCTAssertEqual(actionPath.lineWidth, path.lineWidth)
         } else {
             XCTFail("Wrong action type")
         }
@@ -29,6 +30,7 @@ final class DrawingActionTests: XCTestCase {
             XCTAssertEqual(actionArrow.startPoint, arrow.startPoint)
             XCTAssertEqual(actionArrow.endPoint, arrow.endPoint)
             XCTAssertEqual(actionArrow.color, arrow.color)
+            XCTAssertEqual(actionArrow.lineWidth, arrow.lineWidth)
         } else {
             XCTFail("Wrong action type")
         }
@@ -42,6 +44,7 @@ final class DrawingActionTests: XCTestCase {
             XCTAssertEqual(actionLine.startPoint, line.startPoint)
             XCTAssertEqual(actionLine.endPoint, line.endPoint)
             XCTAssertEqual(actionLine.color, line.color)
+            XCTAssertEqual(actionLine.lineWidth, line.lineWidth)
         } else {
             XCTFail("Wrong action type")
         }
@@ -55,6 +58,7 @@ final class DrawingActionTests: XCTestCase {
             XCTAssertEqual(actionLine.startPoint, line.startPoint)
             XCTAssertEqual(actionLine.endPoint, line.endPoint)
             XCTAssertEqual(actionLine.color, line.color)
+            XCTAssertEqual(actionLine.lineWidth, line.lineWidth)
         } else {
             XCTFail("Wrong action type")
         }
