@@ -14,6 +14,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
     var hotkeyMonitor: Any?
     var overlayWindows: [NSScreen: OverlayWindow] = [:]
     var settingsWindow: NSWindow?
+    var alwaysOnMode: Bool = false
     var aboutWindow: NSWindow?
     var updaterController: SPUStandardUpdaterController!
 
@@ -34,6 +35,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
         let persistedFadeMode =
             UserDefaults.standard.object(forKey: UserDefaults.fadeModeKey) as? Bool ?? true
         overlayWindows.values.forEach { $0.overlayView.fadeMode = persistedFadeMode }
+        
+        // Restore always-on mode if it was enabled when app last quit
+        let shouldStartInAlwaysOnMode = UserDefaults.standard.bool(forKey: UserDefaults.alwaysOnModeKey)
+        if shouldStartInAlwaysOnMode {
+            DispatchQueue.main.async {
+                self.toggleAlwaysOnMode()
+            }
+        }
 
         let persistedLineWidth = UserDefaults.standard.object(forKey: UserDefaults.lineWidthKey) as? Double ?? 3.0
         overlayWindows.values.forEach { $0.overlayView.currentLineWidth = CGFloat(persistedLineWidth) }
@@ -177,7 +186,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             let persistedFadeMode =
                 UserDefaults.standard.object(forKey: UserDefaults.fadeModeKey) as? Bool ?? true
             let currentDrawingModeItem = NSMenuItem(
-                title: persistedFadeMode ? "Current Mode: Fade" : "Current Mode: Persist",
+                title: persistedFadeMode ? "Drawing Mode: Fade" : "Drawing Mode: Persist",
                 action: nil,
                 keyEquivalent: ""
             )
@@ -191,6 +200,23 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             )
             toggleDrawingModeItem.keyEquivalentModifierMask = []
             menu.addItem(toggleDrawingModeItem)
+
+            menu.addItem(NSMenuItem.separator())
+            
+            let currentOverlayModeItem = NSMenuItem(
+                title: alwaysOnMode ? "Overlay Mode: Always-On" : "Overlay Mode: Interactive",
+                action: nil,
+                keyEquivalent: ""
+            )
+            currentOverlayModeItem.isEnabled = false
+            menu.addItem(currentOverlayModeItem)
+            
+            let toggleAlwaysOnModeItem = NSMenuItem(
+                title: alwaysOnMode ? "Exit Always-On Mode" : "Always-On Mode",
+                action: #selector(toggleAlwaysOnMode),
+                keyEquivalent: ""
+            )
+            menu.addItem(toggleAlwaysOnModeItem)
 
             menu.addItem(NSMenuItem.separator())
 
@@ -339,6 +365,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
     }
 
     @objc func toggleOverlay() {
+        // Always-on mode is incompatible with interactive overlay
+        if alwaysOnMode {
+            toggleAlwaysOnMode()
+        }
+        
         guard let currentScreen = getCurrentScreen(),
             let overlayWindow = overlayWindows[currentScreen]
         else {
@@ -350,6 +381,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             overlayWindow.orderOut(nil)
             NSApp.hide(nil)
         } else {
+            configureWindowForNormalMode(overlayWindow)
+            
             // Clear drawings if the setting is enabled
             if UserDefaults.standard.bool(forKey: UserDefaults.clearDrawingsOnStartKey) {
                 overlayWindow.overlayView.clearAll()
@@ -357,12 +390,31 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
 
             updateStatusBarIcon(with: currentColor)
             let screenFrame = currentScreen.frame
-            // Update window frame and position
             overlayWindow.setFrame(screenFrame, display: true)
             overlayWindow.makeKeyAndOrderFront(nil)
-            // Bring app forward
             NSApp.activate(ignoringOtherApps: true)
         }
+    }
+    
+    @objc func toggleAlwaysOnMode() {
+        alwaysOnMode.toggle()
+        
+        overlayWindows.values.forEach { overlayWindow in
+            if alwaysOnMode {
+                configureWindowForAlwaysOnMode(overlayWindow)
+            } else {
+                configureWindowForNormalMode(overlayWindow)
+                overlayWindow.orderOut(nil)
+            }
+        }
+        
+        let iconColor = alwaysOnMode 
+            ? currentColor.withAlphaComponent(0.7)  // Semi-transparent to indicate read-only
+            : .gray
+        updateStatusBarIcon(with: iconColor)
+        
+        UserDefaults.standard.set(alwaysOnMode, forKey: UserDefaults.alwaysOnModeKey)
+        updateAlwaysOnMenuItems()
     }
 
     @objc func closeOverlay() {
@@ -374,23 +426,34 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             overlayWindow.orderOut(nil)
         }
     }
+    
+    @objc func closeOverlayAndEnableAlwaysOn() {
+        // Transition directly to always-on mode to preserve annotations (avoids hiding overlay first)
+        if !alwaysOnMode {
+            toggleAlwaysOnMode()
+        }
+    }
 
     @objc func showOverlay() {
         if let currentScreen = getCurrentScreen(),
             let overlayWindow = overlayWindows[currentScreen],
             !overlayWindow.isVisible
         {
+            configureWindowForNormalMode(overlayWindow)
             updateStatusBarIcon(with: currentColor)
             let screenFrame = currentScreen.frame
-            // Update window frame and position
             overlayWindow.setFrame(screenFrame, display: true)
             overlayWindow.makeKeyAndOrderFront(nil)
-            // Bring app forward
             NSApp.activate(ignoringOtherApps: true)
         }
     }
 
     func switchTool(to tool: ToolType) {
+        // Tool switching requires interactive mode
+        if alwaysOnMode {
+            toggleAlwaysOnMode()
+        }
+        
         overlayWindows.values.forEach { window in
             window.overlayView.currentTool = tool
         }
@@ -399,66 +462,42 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
 
     @objc func enableArrowMode(_ sender: NSMenuItem) {
         switchTool(to: .arrow)
-        if let menu = statusItem.menu {
-            let currentToolItem = menu.item(at: 3)
-            currentToolItem?.title = "Current Tool: Arrow"
-        }
+        updateCurrentToolMenuItem(to: "Arrow")
     }
 
     @objc func enableLineMode(_ sender: NSMenuItem) {
         switchTool(to: .line)
-        if let menu = statusItem.menu {
-            let currentToolItem = menu.item(at: 3)
-            currentToolItem?.title = "Current Tool: Line"
-        }
+        updateCurrentToolMenuItem(to: "Line")
     }
 
     @objc func enablePenMode(_ sender: NSMenuItem) {
         switchTool(to: .pen)
-        if let menu = statusItem.menu {
-            let currentToolItem = menu.item(at: 3)
-            currentToolItem?.title = "Current Tool: Pen"
-        }
+        updateCurrentToolMenuItem(to: "Pen")
     }
 
     @objc func enableHighlighterMode(_ sender: NSMenuItem) {
         switchTool(to: .highlighter)
-        if let menu = statusItem.menu {
-            let currentToolItem = menu.item(at: 3)
-            currentToolItem?.title = "Current Tool: Highlighter"
-        }
+        updateCurrentToolMenuItem(to: "Highlighter")
     }
 
     @objc func enableRectangleMode(_ sender: NSMenuItem) {
         switchTool(to: .rectangle)
-        if let menu = statusItem.menu {
-            let currentToolItem = menu.item(at: 3)
-            currentToolItem?.title = "Current Tool: Rectangle"
-        }
+        updateCurrentToolMenuItem(to: "Rectangle")
     }
 
     @objc func enableCircleMode(_ sender: NSMenuItem) {
         switchTool(to: .circle)
-        if let menu = statusItem.menu {
-            let currentToolItem = menu.item(at: 3)
-            currentToolItem?.title = "Current Tool: Circle"
-        }
+        updateCurrentToolMenuItem(to: "Circle")
     }
 
     @objc func enableCounterMode(_ sender: NSMenuItem) {
         switchTool(to: .counter)
-        if let menu = statusItem.menu {
-            let currentToolItem = menu.item(at: 3)
-            currentToolItem?.title = "Current Tool: Counter"
-        }
+        updateCurrentToolMenuItem(to: "Counter")
     }
 
     @objc func enableTextMode(_ sender: NSMenuItem) {
         switchTool(to: .text)
-        if let menu = statusItem.menu {
-            let currentToolItem = menu.item(at: 3)
-            currentToolItem?.title = "Current Tool: Text"
-        }
+        updateCurrentToolMenuItem(to: "Text")
     }
 
     @objc func toggleBoardVisibility(_ sender: Any?) {
@@ -477,6 +516,69 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
         if let item = toggleBoardItem {
             item.title = boardEnabled ? "Hide \(boardType)" : "Show \(boardType)"
         }
+    }
+    
+    func updateAlwaysOnMenuItems() {
+        guard let menu = statusItem.menu else { return }
+        
+        let currentOverlayModeItem = menu.items.first { 
+            $0.title.hasPrefix("Overlay Mode:")
+        }
+        if let item = currentOverlayModeItem {
+            item.title = alwaysOnMode ? "Overlay Mode: Always-On" : "Overlay Mode: Interactive"
+        }
+        
+        let toggleAlwaysOnModeItem = menu.items.first { $0.action == #selector(toggleAlwaysOnMode) }
+        if let item = toggleAlwaysOnModeItem {
+            item.title = alwaysOnMode ? "Exit Always-On Mode" : "Always-On Mode"
+        }
+    }
+    
+    func updateCurrentToolMenuItem(to toolName: String) {
+        guard let menu = statusItem.menu else { return }
+        
+        let currentToolItem = menu.items.first { $0.title.hasPrefix("Current Tool:") }
+        currentToolItem?.title = "Current Tool: \(toolName)"
+    }
+    
+    private func configureWindowForNormalMode(_ overlayWindow: OverlayWindow) {
+        overlayWindow.ignoresMouseEvents = false
+        overlayWindow.level = .normal
+        overlayWindow.overlayView.isReadOnlyMode = false
+        
+        let persistedFadeMode = UserDefaults.standard.object(forKey: UserDefaults.fadeModeKey) as? Bool ?? true
+        overlayWindow.overlayView.fadeMode = persistedFadeMode
+    }
+    
+    private func configureWindowForAlwaysOnMode(_ overlayWindow: OverlayWindow) {
+        overlayWindow.ignoresMouseEvents = true
+        overlayWindow.level = .floating
+        overlayWindow.overlayView.fadeMode = false  // Persistent annotations for always-on display
+        overlayWindow.overlayView.isReadOnlyMode = true
+        
+        let screenFrame = overlayWindow.screen?.frame ?? NSScreen.main?.frame ?? .zero
+        overlayWindow.setFrame(screenFrame, display: true)
+        overlayWindow.orderFront(nil)
+        overlayWindow.stopFadeLoop()  // Prevent fade conflicts with persistent mode
+    }
+    
+    private func updateFadeModeMenuItems(isCurrentlyFadeMode: Bool) {
+        guard let menu = statusItem.menu else { return }
+        
+        let currentDrawingModeItem = menu.items.first { 
+            $0.title.hasPrefix("Drawing Mode:") 
+        }
+        let toggleDrawingModeItem = menu.items.first { 
+            $0.action == #selector(toggleFadeMode(_:)) 
+        }
+
+        currentDrawingModeItem?.title = isCurrentlyFadeMode
+            ? "Drawing Mode: Persist"
+            : "Drawing Mode: Fade"
+
+        toggleDrawingModeItem?.title = isCurrentlyFadeMode
+            ? "Fade"
+            : "Persist"
     }
 
     func setupBoardObservers() {
@@ -546,20 +648,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
 
         UserDefaults.standard.set(!isCurrentlyFadeMode, forKey: UserDefaults.fadeModeKey)
 
-        if let menu = statusItem.menu {
-            let currentDrawingModeItem = menu.item(at: 15)
-            let toggleDrawingModeItem = menu.item(at: 16)
-
-            currentDrawingModeItem?.title =
-                isCurrentlyFadeMode
-                ? "Current Mode: Persist"
-                : "Current Mode: Fade"
-
-            toggleDrawingModeItem?.title =
-                isCurrentlyFadeMode
-                ? "Fade"
-                : "Persist"
-        }
+        updateFadeModeMenuItems(isCurrentlyFadeMode: isCurrentlyFadeMode)
     }
 
     @objc func showSettings() {

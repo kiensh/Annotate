@@ -15,6 +15,8 @@ struct SettingsView: View {
             GroupBox("General") {
                 VStack(alignment: .center, spacing: 12) {
                     KeyboardShortcuts.Recorder("Annotate Hotkey:", name: .toggleOverlay)
+                    
+                    KeyboardShortcuts.Recorder("Always-On Mode:", name: .toggleAlwaysOnMode)
 
                     Divider()
 

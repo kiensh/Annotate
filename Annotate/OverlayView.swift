@@ -39,6 +39,7 @@ class OverlayView: NSView, NSTextFieldDelegate {
 
     var fadeMode: Bool = true
     let fadeDuration: CFTimeInterval = 1.25
+    var isReadOnlyMode: Bool = false
 
     required init?(coder: NSCoder) {
         super.init(coder: coder)

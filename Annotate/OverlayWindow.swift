@@ -419,7 +419,11 @@ class OverlayWindow: NSWindow {
 
         switch event.keyCode {
         case 53:  // ESC key
-            AppDelegate.shared?.toggleOverlay()
+            if event.modifierFlags.contains(.shift) {
+                AppDelegate.shared?.closeOverlayAndEnableAlwaysOn()
+            } else {
+                AppDelegate.shared?.toggleOverlay()
+            }
         case 51:  // Delete/Backspace key
             if event.modifierFlags.contains(.option) {
                 overlayView.clearAll()

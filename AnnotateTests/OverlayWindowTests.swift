@@ -78,6 +78,9 @@ final class OverlayWindowTests: XCTestCase, Sendable {
         let escEvent = TestEvents.createKeyEvent(type: .keyDown, keyCode: 53)
         window.keyDown(with: escEvent!)
 
+        let shiftEscEvent = TestEvents.createKeyEvent(type: .keyDown, keyCode: 53, modifierFlags: .shift)
+        window.keyDown(with: shiftEscEvent!)
+
         // Test space bar
         let spaceEvent = TestEvents.createKeyEvent(type: .keyDown, keyCode: 49)
         window.keyDown(with: spaceEvent!)
