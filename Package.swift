@@ -18,6 +18,10 @@ let package = Package(
             name: "Annotate",
             dependencies: ["KeyboardShortcuts", "Sparkle"],
             path: "Annotate",
+            exclude: [
+                "Annotate.entitlements",
+                "Info.plist"
+            ],
             resources: [
                 .process("Assets.xcassets"),
                 .process("Preview Content"),
