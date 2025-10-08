@@ -24,6 +24,7 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
   - ⭕ **Circle** shapes for highlighting areas.
   - 🔢 **Counter** tool for adding sequential numbered circles.
   - 📝 **Text** annotations with drag & edit support.
+- 🎨 **Line Width Control:** Adjust line thickness with an interactive picker or Command+Scroll wheel.
 - ✨ **Fade/Persist Mode:** Control whether annotations fade out after a duration or persist on the screen.
 - 📌 **Always-On Mode:** Display annotations persistently without user interaction.
 - 🌈 **Color Picker:** Easily select and persist your preferred color.
@@ -105,6 +106,8 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 | **Close Overlay**           | <kbd>Command</kbd> + <kbd>W</kbd> or <kbd>Esc</kbd>  | Closes the annotation overlay.                                  |
 | **Interactive → Always-On** | <kbd>Shift</kbd> + <kbd>Esc</kbd>                    | Close interactive overlay and enable always-on mode.            |
 | **Open Color Picker**       | <kbd>c</kbd>                                         | Open the color selection menu for tools.                        |
+| **Open Line Width Picker**  | <kbd>w</kbd>                                         | Open the line width picker to adjust thickness.                 |
+| **Adjust Line Width**       | <kbd>Command</kbd> + <kbd>Scroll</kbd>               | Quickly adjust line width with scroll wheel.                    |
 | **Pen Mode**                | <kbd>p</kbd>                                         | Draw freehand lines.                                            |
 | **Arrow Mode**              | <kbd>a</kbd>                                         | Draw arrows.                                                    |
 | **Line Mode**               | <kbd>l</kbd>                                         | Draw straight lines.                                            |
@@ -130,6 +133,24 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 
 - Click and drag to draw freehand lines
 - Pen creates solid lines while highlighter creates semi-transparent, thicker strokes
+- Adjust line thickness using the Line Width Picker or <kbd>Command</kbd> + <kbd>Scroll</kbd> for quick adjustments
+
+#### Line Width Control
+
+Annotate provides flexible line width control:
+
+- **Interactive Picker**: Press <kbd>w</kbd> or select "Line Width" from the menu bar to open a picker with:
+  - Visual line preview showing the current thickness
+  - Slider for precise width adjustment (0.5px to 20px)
+  - Real-time feedback as you adjust
+- **Quick Adjustment**: Hold <kbd>Command</kbd> and scroll your mouse wheel to quickly adjust line width
+  - Scroll up to increase thickness
+  - Scroll down to decrease thickness
+  - Visual feedback appears at the bottom center showing current width and a preview line
+- **Smart Scaling**: Arrowhead sizes automatically scale proportionally with line width for better visual balance
+
+> [!TIP]
+> Line width settings are persisted across sessions and apply to all drawing tools (pen, arrow, line, rectangle, circle).
 
 #### Shapes (Rectangle, Circle)
 
