@@ -67,6 +67,7 @@ class LineWidthPickerViewController: NSViewController {
             
             valueLabel.topAnchor.constraint(equalTo: slider.bottomAnchor, constant: 4),
             valueLabel.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
+            valueLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -10),
         ])
         
         self.view = containerView
