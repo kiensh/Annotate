@@ -539,7 +539,7 @@ class OverlayWindow: NSWindow {
     
     private func showLineWidthFeedback(_ width: CGFloat) {
         let text = String(format: "Line Width: %.2f px", width)
-        showFeedback(text)
+        showFeedback(text, borderColor: overlayView.currentColor, borderWidth: width)
     }
     
     /// Shows a feedback message at the bottom center of the screen
@@ -547,60 +547,155 @@ class OverlayWindow: NSWindow {
     ///   - text: The message to display
     ///   - duration: How long to show the message (default: 1.5 seconds)
     ///   - fadeOutDuration: How long the fade out animation takes (default: 0.5 seconds)
+    ///   - borderColor: Optional border color (default: nil for no border)
+    ///   - borderWidth: Optional border width (default: nil for no border)
     private func showFeedback(
         _ text: String,
         duration: TimeInterval = 1.5,
-        fadeOutDuration: TimeInterval = 0.5
+        fadeOutDuration: TimeInterval = 0.5,
+        borderColor: NSColor? = nil,
+        borderWidth: CGFloat? = nil
     ) {
-        // Cancel any pending removal task
+        removePreviousFeedback()
+        
+        let containerView = createFeedbackContainer(
+            text: text,
+            lineColor: borderColor,
+            lineWidth: borderWidth
+        )
+        
+        overlayView.addSubview(containerView)
+        currentFeedbackView = containerView
+        
+        scheduleFeedbackRemoval(
+            containerView: containerView,
+            duration: duration,
+            fadeOutDuration: fadeOutDuration
+        )
+    }
+    
+    private func removePreviousFeedback() {
         feedbackRemovalTask?.cancel()
         
-        // Remove the previous view immediately if it exists
         if let previousView = currentFeedbackView {
             previousView.removeFromSuperview()
             currentFeedbackView = nil
         }
-        
-        // Create container view positioned at bottom center
+    }
+    
+    private func createFeedbackContainer(
+        text: String,
+        lineColor: NSColor?,
+        lineWidth: CGFloat?
+    ) -> NSView {
         let containerWidth: CGFloat = 250
-        let containerHeight: CGFloat = 60
-        let padding: CGFloat = 20
+        let containerHeight: CGFloat = 80
+        let bottomPadding: CGFloat = 20
+        let extraLinePadding = lineWidth != nil ? max(0, lineWidth! / 2) : 0
+        
         let containerView = NSView(frame: NSRect(
             x: (frame.width - containerWidth) / 2,
-            y: padding,
+            y: bottomPadding + extraLinePadding,
             width: containerWidth,
             height: containerHeight
         ))
-        containerView.wantsLayer = true
-        containerView.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.75).cgColor
-        containerView.layer?.cornerRadius = 8
         
-        // Create label with proper vertical centering
+        configureFeedbackContainerStyle(containerView, lineColor: lineColor)
+        
+        let feedbackLabel = createFeedbackLabel(
+            text: text,
+            containerWidth: containerWidth,
+            containerHeight: containerHeight,
+            backgroundColor: containerView.layer?.backgroundColor
+        )
+        containerView.addSubview(feedbackLabel)
+        
+        if let lineColor = lineColor, let lineWidth = lineWidth {
+            let lineView = createLinePreview(
+                lineColor: lineColor,
+                lineWidth: lineWidth,
+                containerWidth: containerWidth
+            )
+            containerView.addSubview(lineView)
+        }
+        
+        return containerView
+    }
+    
+    private func configureFeedbackContainerStyle(_ containerView: NSView, lineColor: NSColor?) {
+        containerView.wantsLayer = true
+        
+        let backgroundColor: NSColor
+        if let lineColor = lineColor {
+            backgroundColor = lineColor.contrastingColor().withAlphaComponent(0.75)
+        } else {
+            backgroundColor = NSColor.black.withAlphaComponent(0.75)
+        }
+        
+        containerView.layer?.backgroundColor = backgroundColor.cgColor
+        containerView.layer?.cornerRadius = 8
+    }
+    
+    private func createFeedbackLabel(
+        text: String,
+        containerWidth: CGFloat,
+        containerHeight: CGFloat,
+        backgroundColor: CGColor?
+    ) -> NSTextField {
+        let labelPadding: CGFloat = 10
+        let textVerticalPadding: CGFloat = 10
+        
         let feedbackLabel = NSTextField(labelWithString: text)
         feedbackLabel.font = NSFont.boldSystemFont(ofSize: 24)
-        feedbackLabel.textColor = .white
         feedbackLabel.backgroundColor = .clear
         feedbackLabel.isBordered = false
         feedbackLabel.isEditable = false
         feedbackLabel.isSelectable = false
         feedbackLabel.alignment = .center
         
-        // Calculate text size for proper centering
+        if let bgColor = backgroundColor {
+            let nsColor = NSColor(cgColor: bgColor) ?? .black
+            feedbackLabel.textColor = nsColor.contrastingColor()
+        } else {
+            feedbackLabel.textColor = .white
+        }
+        
         let textSize = text.size(withAttributes: [.font: feedbackLabel.font!])
         feedbackLabel.frame = NSRect(
-            x: 0,
-            y: (containerHeight - textSize.height) / 2,
-            width: containerWidth,
+            x: labelPadding,
+            y: containerHeight - textSize.height - textVerticalPadding,
+            width: containerWidth - (labelPadding * 2),
             height: textSize.height
         )
         
-        containerView.addSubview(feedbackLabel)
-        overlayView.addSubview(containerView)
+        return feedbackLabel
+    }
+    
+    private func createLinePreview(
+        lineColor: NSColor,
+        lineWidth: CGFloat,
+        containerWidth: CGFloat
+    ) -> LinePreviewView {
+        let labelPadding: CGFloat = 10
+        let textVerticalPadding: CGFloat = 10
         
-        // Store reference to container view
-        currentFeedbackView = containerView
+        let lineView = LinePreviewView(frame: NSRect(
+            x: labelPadding,
+            y: textVerticalPadding,
+            width: containerWidth - (labelPadding * 2),
+            height: max(lineWidth, 10)
+        ))
+        lineView.lineColor = lineColor
+        lineView.lineWidth = lineWidth
         
-        // Stay visible for specified duration, then fade out
+        return lineView
+    }
+    
+    private func scheduleFeedbackRemoval(
+        containerView: NSView,
+        duration: TimeInterval,
+        fadeOutDuration: TimeInterval
+    ) {
         let totalDuration = duration + fadeOutDuration
         let removalTask = DispatchWorkItem { [weak self, weak containerView] in
             guard let view = containerView else { return }
@@ -629,5 +724,27 @@ class OverlayWindow: NSWindow {
                 }
             }
         }
+    }
+}
+
+// Helper view to draw a line preview in the feedback overlay
+class LinePreviewView: NSView {
+    var lineColor: NSColor = .white
+    var lineWidth: CGFloat = 3.0
+    
+    override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
+        
+        let path = NSBezierPath()
+        let startPoint = NSPoint(x: 0, y: bounds.midY)
+        let endPoint = NSPoint(x: bounds.width, y: bounds.midY)
+        
+        path.move(to: startPoint)
+        path.line(to: endPoint)
+        
+        lineColor.setStroke()
+        path.lineWidth = lineWidth
+        path.lineCapStyle = .round
+        path.stroke()
     }
 }
