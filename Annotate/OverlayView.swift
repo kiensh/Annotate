@@ -452,7 +452,8 @@ class OverlayView: NSView, NSTextFieldDelegate {
         let adaptedColor = adaptColorForBoard(color, boardType: currentBoardType)
 
         // Calculate arrow head dimensions for equilateral triangle
-        let sideLength: CGFloat = 25.0  // Length of each side of the equilateral triangle
+        // Scale arrowhead size relative to line width, with a minimum and reasonable multiplier
+        let sideLength: CGFloat = max(10.0, lineWidth * 4.0)
 
         let dx = end.x - start.x
         let dy = end.y - start.y
