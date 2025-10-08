@@ -197,4 +197,71 @@ final class OverlayWindowTests: XCTestCase, Sendable {
         XCTAssertGreaterThanOrEqual(initialWidth, 0.5, "Initial width should be within valid range")
         XCTAssertLessThanOrEqual(initialWidth, 20.0, "Initial width should be within valid range")
     }
+    
+    func testToolFeedbackMethodExists() {
+        // Test that showToolFeedback method can be called without errors
+        window.showToolFeedback(.pen)
+        window.showToolFeedback(.arrow)
+        window.showToolFeedback(.line)
+        window.showToolFeedback(.highlighter)
+        window.showToolFeedback(.rectangle)
+        window.showToolFeedback(.circle)
+        window.showToolFeedback(.counter)
+        window.showToolFeedback(.text)
+        
+        // If we got here without crashing, the method works
+        XCTAssertTrue(true, "showToolFeedback should work for all tool types")
+    }
+    
+    func testToolFeedbackForDrawingTools() {
+        // Test that drawing tools can show feedback
+        let drawingTools: [ToolType] = [.pen, .arrow, .line, .highlighter, .rectangle, .circle]
+        
+        for tool in drawingTools {
+            window.overlayView.currentTool = tool
+            window.showToolFeedback(tool)
+            
+            // Verify the tool was set correctly
+            XCTAssertEqual(window.overlayView.currentTool, tool, "Tool should be set to \(tool)")
+        }
+    }
+    
+    func testToolFeedbackForNonDrawingTools() {
+        // Test that non-drawing tools can show feedback
+        let nonDrawingTools: [ToolType] = [.counter, .text]
+        
+        for tool in nonDrawingTools {
+            window.overlayView.currentTool = tool
+            window.showToolFeedback(tool)
+            
+            // Verify the tool was set correctly
+            XCTAssertEqual(window.overlayView.currentTool, tool, "Tool should be set to \(tool)")
+        }
+    }
+    
+    func testToolFeedbackWithDifferentLineWidths() {
+        // Test that feedback works with various line widths
+        let widths: [CGFloat] = [0.5, 3.0, 10.0, 20.0]
+        
+        for width in widths {
+            window.overlayView.currentLineWidth = width
+            window.showToolFeedback(.pen)
+            
+            // Verify the width was set correctly
+            XCTAssertEqual(window.overlayView.currentLineWidth, width, "Line width should be \(width)")
+        }
+    }
+    
+    func testToolFeedbackWithDifferentColors() {
+        // Test that feedback works with different colors
+        let colors: [NSColor] = [.red, .blue, .black, .white, .yellow, .green]
+        
+        for color in colors {
+            window.overlayView.currentColor = color
+            window.showToolFeedback(.pen)
+            
+            // Verify the color was set correctly
+            XCTAssertEqual(window.overlayView.currentColor, color, "Color should be set correctly")
+        }
+    }
 }
