@@ -539,7 +539,7 @@ class OverlayWindow: NSWindow {
     
     private func showLineWidthFeedback(_ width: CGFloat) {
         let text = String(format: "Line Width: %.2f px", width)
-        showFeedback(text, borderColor: overlayView.currentColor, borderWidth: width)
+        showFeedback(text, lineColor: overlayView.currentColor, lineWidth: width)
     }
     
     func showToolFeedback(_ tool: ToolType) {
@@ -582,10 +582,11 @@ class OverlayWindow: NSWindow {
         // Show feedback with line preview for tools that use line width
         switch tool {
         case .pen, .arrow, .line, .highlighter, .rectangle, .circle:
-            showFeedback(text, borderColor: overlayView.currentColor, borderWidth: currentWidth)
+            // Drawing tools: show color background + line preview
+            showFeedback(text, lineColor: overlayView.currentColor, lineWidth: currentWidth)
         case .counter, .text:
-            // Counter and text don't use line width, show without line preview
-            showFeedback(text, borderColor: overlayView.currentColor)
+            // Counter and text: show color background but no line preview (they don't use line width)
+            showFeedback(text, lineColor: overlayView.currentColor)
         }
     }
     
@@ -594,21 +595,21 @@ class OverlayWindow: NSWindow {
     ///   - text: The message to display
     ///   - duration: How long to show the message (default: 1.5 seconds)
     ///   - fadeOutDuration: How long the fade out animation takes (default: 0.5 seconds)
-    ///   - borderColor: Optional border color (default: nil for no border)
-    ///   - borderWidth: Optional border width (default: nil for no border)
+    ///   - lineColor: Optional line color for preview (default: nil for no line)
+    ///   - lineWidth: Optional line width for preview (default: nil for no line)
     private func showFeedback(
         _ text: String,
         duration: TimeInterval = 1.5,
         fadeOutDuration: TimeInterval = 0.5,
-        borderColor: NSColor? = nil,
-        borderWidth: CGFloat? = nil
+        lineColor: NSColor? = nil,
+        lineWidth: CGFloat? = nil
     ) {
         removePreviousFeedback()
         
         let containerView = createFeedbackContainer(
             text: text,
-            lineColor: borderColor,
-            lineWidth: borderWidth
+            lineColor: lineColor,
+            lineWidth: lineWidth
         )
         
         overlayView.addSubview(containerView)
