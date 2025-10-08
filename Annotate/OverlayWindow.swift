@@ -636,18 +636,15 @@ class OverlayWindow: NSWindow {
         lineColor: NSColor?,
         lineWidth: CGFloat?
     ) -> NSView {
-        let containerWidth: CGFloat = 250
+        let containerWidth = calculateFeedbackContainerWidth(for: text)
         let containerHeight: CGFloat = 80
-        let bottomPadding: CGFloat = 20
-        let extraLinePadding = lineWidth != nil ? max(0, lineWidth! / 2) : 0
-        
-        let containerView = NSView(frame: NSRect(
-            x: (frame.width - containerWidth) / 2,
-            y: bottomPadding + extraLinePadding,
+        let containerFrame = calculateFeedbackContainerFrame(
             width: containerWidth,
-            height: containerHeight
-        ))
+            height: containerHeight,
+            lineWidth: lineWidth
+        )
         
+        let containerView = NSView(frame: containerFrame)
         configureFeedbackContainerStyle(containerView, lineColor: lineColor)
         
         let feedbackLabel = createFeedbackLabel(
@@ -668,6 +665,36 @@ class OverlayWindow: NSWindow {
         }
         
         return containerView
+    }
+    
+    private func calculateFeedbackContainerWidth(for text: String) -> CGFloat {
+        let labelPadding: CGFloat = 10
+        let extraMargin: CGFloat = 40
+        let font = NSFont.boldSystemFont(ofSize: 24)
+        let textSize = text.size(withAttributes: [.font: font])
+        
+        // Container width = text width + horizontal padding + margins
+        let minWidth: CGFloat = 150
+        let maxWidth: CGFloat = 400
+        let calculatedWidth = textSize.width + (labelPadding * 2) + extraMargin
+        
+        return min(max(minWidth, calculatedWidth), maxWidth)
+    }
+    
+    private func calculateFeedbackContainerFrame(
+        width: CGFloat,
+        height: CGFloat,
+        lineWidth: CGFloat?
+    ) -> NSRect {
+        let bottomPadding: CGFloat = 20
+        let extraLinePadding = lineWidth != nil ? max(0, lineWidth! / 2) : 0
+        
+        return NSRect(
+            x: (frame.width - width) / 2,
+            y: bottomPadding + extraLinePadding,
+            width: width,
+            height: height
+        )
     }
     
     private func configureFeedbackContainerStyle(_ containerView: NSView, lineColor: NSColor?) {
