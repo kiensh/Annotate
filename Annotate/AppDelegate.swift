@@ -456,6 +456,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
         
         overlayWindows.values.forEach { window in
             window.overlayView.currentTool = tool
+            window.showToolFeedback(tool)
         }
         showOverlay()
     }

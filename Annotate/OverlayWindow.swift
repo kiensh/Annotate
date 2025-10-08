@@ -542,6 +542,53 @@ class OverlayWindow: NSWindow {
         showFeedback(text, borderColor: overlayView.currentColor, borderWidth: width)
     }
     
+    func showToolFeedback(_ tool: ToolType) {
+        let toolName: String
+        let icon: String
+        
+        switch tool {
+        case .pen:
+            toolName = "Pen"
+            icon = "✒️"
+        case .arrow:
+            toolName = "Arrow"
+            icon = "➡️"
+        case .line:
+            toolName = "Line"
+            icon = "📏"
+        case .highlighter:
+            toolName = "Highlighter"
+            icon = "🟨"
+        case .rectangle:
+            toolName = "Rectangle"
+            icon = "🔲"
+        case .circle:
+            toolName = "Circle"
+            icon = "⭕"
+        case .counter:
+            toolName = "Counter"
+            icon = "🔢"
+        case .text:
+            toolName = "Text"
+            icon = "📝"
+        }
+        
+        // Get current line width
+        let currentWidth = overlayView.currentLineWidth
+        let widthText = String(format: "%.2f px", currentWidth)
+        
+        let text = "\(icon) \(toolName) • \(widthText)"
+        
+        // Show feedback with line preview for tools that use line width
+        switch tool {
+        case .pen, .arrow, .line, .highlighter, .rectangle, .circle:
+            showFeedback(text, borderColor: overlayView.currentColor, borderWidth: currentWidth)
+        case .counter, .text:
+            // Counter and text don't use line width, show without line preview
+            showFeedback(text, borderColor: overlayView.currentColor)
+        }
+    }
+    
     /// Shows a feedback message at the bottom center of the screen
     /// - Parameters:
     ///   - text: The message to display
