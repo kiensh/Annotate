@@ -99,6 +99,12 @@ class LineWidthPickerViewController: NSViewController {
         }
     }
     
+    override func viewWillAppear() {
+        super.viewWillAppear()
+        // Refresh preview when view appears (in case color changed)
+        previewView.needsDisplay = true
+    }
+    
     private func updateValueLabel(_ lineWidth: CGFloat) {
         valueLabel.stringValue = String(format: "%.2f px", lineWidth)
     }
@@ -114,8 +120,12 @@ class LineWidthPreviewView: NSView {
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
         
-        // Draw background
-        NSColor.controlBackgroundColor.setFill()
+        // Use current color or default
+        let color = AppDelegate.shared?.currentColor ?? NSColor.systemRed
+        
+        // Draw background with contrasting color
+        let backgroundColor = color.contrastingColor().withAlphaComponent(0.75)
+        backgroundColor.setFill()
         bounds.fill()
         
         // Draw line preview
@@ -126,8 +136,6 @@ class LineWidthPreviewView: NSView {
         path.move(to: startPoint)
         path.line(to: endPoint)
         
-        // Use current color or default
-        let color = AppDelegate.shared?.currentColor ?? NSColor.systemRed
         color.setStroke()
         
         path.lineWidth = lineWidth
