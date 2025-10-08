@@ -102,6 +102,29 @@ enum TestEvents {
             keyCode: keyCode
         )
     }
+    
+    static func createScrollEvent(
+        deltaY: CGFloat,
+        modifierFlags: NSEvent.ModifierFlags = []
+    ) -> NSEvent? {
+        // Create a CGEvent for scroll wheel
+        guard let cgEvent = CGEvent(
+            scrollWheelEvent2Source: nil,
+            units: .pixel,
+            wheelCount: 1,
+            wheel1: Int32(deltaY),
+            wheel2: 0,
+            wheel3: 0
+        ) else {
+            return nil
+        }
+        
+        // Set modifier flags
+        cgEvent.flags = CGEventFlags(rawValue: UInt64(modifierFlags.rawValue))
+        
+        // Convert to NSEvent
+        return NSEvent(cgEvent: cgEvent)
+    }
 }
 
 // MARK: - Mock Classes
