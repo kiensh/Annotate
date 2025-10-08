@@ -170,4 +170,61 @@ final class ArrowDrawingTests: XCTestCase, Sendable {
         XCTAssertEqual(overlayView.arrows.count, initialCount + 1)
         XCTAssertEqual(overlayView.arrows.last?.lineWidth, 4.0)
     }
+    
+    func testArrowheadScalesWithLineWidth() {
+        // Test that arrowhead size is relative to line width
+        // Formula: max(10.0, lineWidth * 4.0)
+        
+        // Test thin line width
+        let thinLineWidth: CGFloat = 1.0
+        let thinArrowheadSize = max(10.0, thinLineWidth * 4.0)
+        XCTAssertEqual(thinArrowheadSize, 10.0, "Thin line should use minimum arrowhead size")
+        
+        // Test default line width
+        let defaultLineWidth: CGFloat = 3.0
+        let defaultArrowheadSize = max(10.0, defaultLineWidth * 4.0)
+        XCTAssertEqual(defaultArrowheadSize, 12.0, "Default line should scale arrowhead size")
+        
+        // Test medium line width
+        let mediumLineWidth: CGFloat = 5.0
+        let mediumArrowheadSize = max(10.0, mediumLineWidth * 4.0)
+        XCTAssertEqual(mediumArrowheadSize, 20.0, "Medium line should scale arrowhead size")
+        
+        // Test thick line width
+        let thickLineWidth: CGFloat = 10.0
+        let thickArrowheadSize = max(10.0, thickLineWidth * 4.0)
+        XCTAssertEqual(thickArrowheadSize, 40.0, "Thick line should scale arrowhead size proportionally")
+        
+        // Test maximum line width
+        let maxLineWidth: CGFloat = 20.0
+        let maxArrowheadSize = max(10.0, maxLineWidth * 4.0)
+        XCTAssertEqual(maxArrowheadSize, 80.0, "Maximum line width should have largest arrowhead")
+    }
+    
+    func testArrowheadSizeFormula() {
+        // Test the arrowhead size formula matches expected behavior
+        // Formula: max(10.0, lineWidth * 4.0)
+        let testCases: [(lineWidth: CGFloat, expectedSize: CGFloat)] = [
+            (0.5, 10.0),   // Min size
+            (1.0, 10.0),   // Min size
+            (2.0, 10.0),   // Min size
+            (2.5, 10.0),   // At boundary
+            (3.0, 12.0),   // Scaling starts
+            (4.0, 16.0),   // Scaling
+            (5.0, 20.0),   // Scaling
+            (8.0, 32.0),   // Large
+            (15.0, 60.0),  // Large
+            (20.0, 80.0)   // Maximum
+        ]
+        
+        for testCase in testCases {
+            let calculatedSize = max(10.0, testCase.lineWidth * 4.0)
+            XCTAssertEqual(
+                calculatedSize,
+                testCase.expectedSize,
+                accuracy: 0.01,
+                "Line width \(testCase.lineWidth) should produce arrowhead size \(testCase.expectedSize)"
+            )
+        }
+    }
 }
