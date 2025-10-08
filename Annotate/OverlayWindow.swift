@@ -488,48 +488,52 @@ class OverlayWindow: NSWindow {
         let cmdPressed = event.modifierFlags.contains(.command)
         
         if cmdPressed {
-            // Adjust line width with Command + Scroll
-            let minLineWidth: CGFloat = 0.5
-            let maxLineWidth: CGFloat = 20.0
-            let ratio: CGFloat = 0.25
-            
-            // Get scroll delta (negative means scroll up, positive means scroll down)
-            let scrollDelta = event.scrollingDeltaY
-            
-            // Determine direction and amount
-            let increment: CGFloat = scrollDelta > 0 ? ratio : -ratio
-            
-            // Get current line width
-            let currentWidth = overlayView.currentLineWidth
-            
-            // Calculate new width
-            var newWidth = currentWidth + increment
-            
-            // Round to nearest ratio increment
-            newWidth = round(newWidth / ratio) * ratio
-            
-            // Clamp to min/max
-            newWidth = max(minLineWidth, min(maxLineWidth, newWidth))
-            
-            // Only update if value changed
-            if newWidth != currentWidth {
-                // Update the line width globally
-                overlayView.currentLineWidth = newWidth
-                
-                // Save to UserDefaults
-                UserDefaults.standard.set(Double(newWidth), forKey: UserDefaults.lineWidthKey)
-                
-                // Apply to all overlay windows
-                AppDelegate.shared?.overlayWindows.values.forEach { window in
-                    window.overlayView.currentLineWidth = newWidth
-                }
-                
-                // Show visual feedback
-                showLineWidthFeedback(newWidth)
-            }
+            scrollWheelForLineWidth(with: event)
         } else {
             // Default scroll behavior
             super.scrollWheel(with: event)
+        }
+    }
+    
+    private func scrollWheelForLineWidth(with event: NSEvent) {
+        // Adjust line width with Command + Scroll
+        let minLineWidth: CGFloat = 0.5
+        let maxLineWidth: CGFloat = 20.0
+        let ratio: CGFloat = 0.25
+        
+        // Get scroll delta (negative means scroll up, positive means scroll down)
+        let scrollDelta = event.scrollingDeltaY
+        
+        // Determine direction and amount
+        let increment: CGFloat = scrollDelta > 0 ? ratio : -ratio
+        
+        // Get current line width
+        let currentWidth = overlayView.currentLineWidth
+        
+        // Calculate new width
+        var newWidth = currentWidth + increment
+        
+        // Round to nearest ratio increment
+        newWidth = round(newWidth / ratio) * ratio
+        
+        // Clamp to min/max
+        newWidth = max(minLineWidth, min(maxLineWidth, newWidth))
+        
+        // Only update if value changed
+        if newWidth != currentWidth {
+            // Update the line width globally
+            overlayView.currentLineWidth = newWidth
+            
+            // Save to UserDefaults
+            UserDefaults.standard.set(Double(newWidth), forKey: UserDefaults.lineWidthKey)
+            
+            // Apply to all overlay windows
+            AppDelegate.shared?.overlayWindows.values.forEach { window in
+                window.overlayView.currentLineWidth = newWidth
+            }
+            
+            // Show visual feedback
+            showLineWidthFeedback(newWidth)
         }
     }
     
@@ -538,7 +542,7 @@ class OverlayWindow: NSWindow {
         showFeedback(text)
     }
     
-    /// Shows a centered feedback message on screen
+    /// Shows a feedback message at the bottom center of the screen
     /// - Parameters:
     ///   - text: The message to display
     ///   - duration: How long to show the message (default: 1.5 seconds)
@@ -557,12 +561,13 @@ class OverlayWindow: NSWindow {
             currentFeedbackView = nil
         }
         
-        // Create container view for proper centering
+        // Create container view positioned at bottom center
         let containerWidth: CGFloat = 250
         let containerHeight: CGFloat = 60
+        let padding: CGFloat = 20
         let containerView = NSView(frame: NSRect(
             x: (frame.width - containerWidth) / 2,
-            y: (frame.height - containerHeight) / 2,
+            y: padding,
             width: containerWidth,
             height: containerHeight
         ))
