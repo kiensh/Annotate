@@ -11,6 +11,10 @@ class OverlayWindow: NSWindow {
 
     var fadeTimer: Timer?
     let fadeInterval: TimeInterval = 1.0 / 60.0
+    
+    // Track the current feedback view to remove it when a new one appears
+    private var currentFeedbackView: NSView?
+    private var feedbackRemovalTask: DispatchWorkItem?
 
     var currentColor: NSColor {
         get { overlayView.currentColor }
@@ -171,24 +175,26 @@ class OverlayWindow: NSWindow {
             let t = CACurrentMediaTime()
             overlayView.currentPath = DrawingPath(
                 points: [TimedPoint(point: startPoint, timestamp: t)],
-                color: currentColor)
+                color: currentColor,
+                lineWidth: overlayView.currentLineWidth)
         case .arrow:
             overlayView.currentArrow = Arrow(
-                startPoint: startPoint, endPoint: startPoint, color: currentColor)
+                startPoint: startPoint, endPoint: startPoint, color: currentColor, lineWidth: overlayView.currentLineWidth, creationTime: nil)
         case .line:
             overlayView.currentLine = Line(
-                startPoint: startPoint, endPoint: startPoint, color: currentColor)
+                startPoint: startPoint, endPoint: startPoint, color: currentColor, lineWidth: overlayView.currentLineWidth, creationTime: nil)
         case .highlighter:
             let t = CACurrentMediaTime()
             overlayView.currentHighlight = DrawingPath(
                 points: [TimedPoint(point: startPoint, timestamp: t)],
-                color: currentColor.withAlphaComponent(0.3))
+                color: currentColor.withAlphaComponent(0.3),
+                lineWidth: overlayView.currentLineWidth)
         case .rectangle:
             overlayView.currentRectangle = Rectangle(
-                startPoint: startPoint, endPoint: startPoint, color: overlayView.currentColor)
+                startPoint: startPoint, endPoint: startPoint, color: overlayView.currentColor, lineWidth: overlayView.currentLineWidth, creationTime: nil)
         case .circle:
             overlayView.currentCircle = Circle(
-                startPoint: startPoint, endPoint: startPoint, color: overlayView.currentColor)
+                startPoint: startPoint, endPoint: startPoint, color: overlayView.currentColor, lineWidth: overlayView.currentLineWidth, creationTime: nil)
         case .text:
             break
         case .counter:
@@ -400,6 +406,9 @@ class OverlayWindow: NSWindow {
             case ShortcutManager.shared.getShortcut(for: .colorPicker):
                 AppDelegate.shared?.showColorPicker(nil)
                 return
+            case ShortcutManager.shared.getShortcut(for: .lineWidthPicker):
+                AppDelegate.shared?.showLineWidthPicker(nil)
+                return
             case ShortcutManager.shared.getShortcut(for: .toggleBoard):
                 AppDelegate.shared?.toggleBoardVisibility(nil)
                 return
@@ -472,5 +481,345 @@ class OverlayWindow: NSWindow {
             )
             anchorPoint = NSPoint(x: boundingRect.midX, y: boundingRect.midY)
         }
+    }
+    
+    override func scrollWheel(with event: NSEvent) {
+        // Check if Command key is pressed
+        let cmdPressed = event.modifierFlags.contains(.command)
+        
+        if cmdPressed {
+            scrollWheelForLineWidth(with: event)
+        } else {
+            // Default scroll behavior
+            super.scrollWheel(with: event)
+        }
+    }
+    
+    private func scrollWheelForLineWidth(with event: NSEvent) {
+        // Adjust line width with Command + Scroll
+        let minLineWidth: CGFloat = 0.5
+        let maxLineWidth: CGFloat = 20.0
+        let ratio: CGFloat = 0.25
+        
+        // Get scroll delta (negative means scroll up, positive means scroll down)
+        let scrollDelta = event.scrollingDeltaY
+        
+        // Determine direction and amount
+        let increment: CGFloat = scrollDelta > 0 ? ratio : -ratio
+        
+        // Get current line width
+        let currentWidth = overlayView.currentLineWidth
+        
+        // Calculate new width
+        var newWidth = currentWidth + increment
+        
+        // Round to nearest ratio increment
+        newWidth = round(newWidth / ratio) * ratio
+        
+        // Clamp to min/max
+        newWidth = max(minLineWidth, min(maxLineWidth, newWidth))
+        
+        // Only update if value changed
+        if newWidth != currentWidth {
+            // Update the line width globally
+            overlayView.currentLineWidth = newWidth
+            
+            // Save to UserDefaults
+            UserDefaults.standard.set(Double(newWidth), forKey: UserDefaults.lineWidthKey)
+            
+            // Apply to all overlay windows
+            AppDelegate.shared?.overlayWindows.values.forEach { window in
+                window.overlayView.currentLineWidth = newWidth
+            }
+            
+            // Show visual feedback
+            showLineWidthFeedback(newWidth)
+        }
+    }
+    
+    private func showLineWidthFeedback(_ width: CGFloat) {
+        let text = String(format: "Line Width: %.2f px", width)
+        showFeedback(text, lineColor: overlayView.currentColor, lineWidth: width)
+    }
+    
+    func showToolFeedback(_ tool: ToolType) {
+        let toolName: String
+        let icon: String
+        
+        switch tool {
+        case .pen:
+            toolName = "Pen"
+            icon = "✒️"
+        case .arrow:
+            toolName = "Arrow"
+            icon = "➡️"
+        case .line:
+            toolName = "Line"
+            icon = "📏"
+        case .highlighter:
+            toolName = "Highlighter"
+            icon = "🟨"
+        case .rectangle:
+            toolName = "Rectangle"
+            icon = "🔲"
+        case .circle:
+            toolName = "Circle"
+            icon = "⭕"
+        case .counter:
+            toolName = "Counter"
+            icon = "🔢"
+        case .text:
+            toolName = "Text"
+            icon = "📝"
+        }
+        
+        // Get current line width
+        let currentWidth = overlayView.currentLineWidth
+        let widthText = String(format: "%.2f px", currentWidth)
+        
+        let text = "\(icon) \(toolName) • \(widthText)"
+        
+        // Show feedback with line preview for tools that use line width
+        switch tool {
+        case .pen, .arrow, .line, .highlighter, .rectangle, .circle:
+            // Drawing tools: show color background + line preview
+            showFeedback(text, lineColor: overlayView.currentColor, lineWidth: currentWidth)
+        case .counter, .text:
+            // Counter and text: show color background but no line preview (they don't use line width)
+            showFeedback(text, lineColor: overlayView.currentColor)
+        }
+    }
+    
+    /// Shows a feedback message at the bottom center of the screen
+    /// - Parameters:
+    ///   - text: The message to display
+    ///   - duration: How long to show the message (default: 1.5 seconds)
+    ///   - fadeOutDuration: How long the fade out animation takes (default: 0.5 seconds)
+    ///   - lineColor: Optional line color for preview (default: nil for no line)
+    ///   - lineWidth: Optional line width for preview (default: nil for no line)
+    private func showFeedback(
+        _ text: String,
+        duration: TimeInterval = 1.5,
+        fadeOutDuration: TimeInterval = 0.5,
+        lineColor: NSColor? = nil,
+        lineWidth: CGFloat? = nil
+    ) {
+        removePreviousFeedback()
+        
+        let containerView = createFeedbackContainer(
+            text: text,
+            lineColor: lineColor,
+            lineWidth: lineWidth
+        )
+        
+        overlayView.addSubview(containerView)
+        currentFeedbackView = containerView
+        
+        scheduleFeedbackRemoval(
+            containerView: containerView,
+            duration: duration,
+            fadeOutDuration: fadeOutDuration
+        )
+    }
+    
+    private func removePreviousFeedback() {
+        feedbackRemovalTask?.cancel()
+        
+        if let previousView = currentFeedbackView {
+            previousView.removeFromSuperview()
+            currentFeedbackView = nil
+        }
+    }
+    
+    private func createFeedbackContainer(
+        text: String,
+        lineColor: NSColor?,
+        lineWidth: CGFloat?
+    ) -> NSView {
+        let containerWidth = calculateFeedbackContainerWidth(for: text)
+        let containerHeight: CGFloat = 80
+        let containerFrame = calculateFeedbackContainerFrame(
+            width: containerWidth,
+            height: containerHeight,
+            lineWidth: lineWidth
+        )
+        
+        let containerView = NSView(frame: containerFrame)
+        configureFeedbackContainerStyle(containerView, lineColor: lineColor)
+        
+        let feedbackLabel = createFeedbackLabel(
+            text: text,
+            containerWidth: containerWidth,
+            containerHeight: containerHeight,
+            backgroundColor: containerView.layer?.backgroundColor
+        )
+        containerView.addSubview(feedbackLabel)
+        
+        if let lineColor = lineColor, let lineWidth = lineWidth {
+            let lineView = createLinePreview(
+                lineColor: lineColor,
+                lineWidth: lineWidth,
+                containerWidth: containerWidth
+            )
+            containerView.addSubview(lineView)
+        }
+        
+        return containerView
+    }
+    
+    private func calculateFeedbackContainerWidth(for text: String) -> CGFloat {
+        let labelPadding: CGFloat = 10
+        let extraMargin: CGFloat = 40
+        let font = NSFont.boldSystemFont(ofSize: 24)
+        let textSize = text.size(withAttributes: [.font: font])
+        
+        // Container width = text width + horizontal padding + margins
+        let minWidth: CGFloat = 150
+        let maxWidth: CGFloat = 400
+        let calculatedWidth = textSize.width + (labelPadding * 2) + extraMargin
+        
+        return min(max(minWidth, calculatedWidth), maxWidth)
+    }
+    
+    private func calculateFeedbackContainerFrame(
+        width: CGFloat,
+        height: CGFloat,
+        lineWidth: CGFloat?
+    ) -> NSRect {
+        let bottomPadding: CGFloat = 20
+        let extraLinePadding = lineWidth != nil ? max(0, lineWidth! / 2) : 0
+        
+        return NSRect(
+            x: (frame.width - width) / 2,
+            y: bottomPadding + extraLinePadding,
+            width: width,
+            height: height
+        )
+    }
+    
+    private func configureFeedbackContainerStyle(_ containerView: NSView, lineColor: NSColor?) {
+        containerView.wantsLayer = true
+        
+        let backgroundColor: NSColor
+        if let lineColor = lineColor {
+            backgroundColor = lineColor.contrastingColor().withAlphaComponent(0.75)
+        } else {
+            backgroundColor = NSColor.black.withAlphaComponent(0.75)
+        }
+        
+        containerView.layer?.backgroundColor = backgroundColor.cgColor
+        containerView.layer?.cornerRadius = 8
+    }
+    
+    private func createFeedbackLabel(
+        text: String,
+        containerWidth: CGFloat,
+        containerHeight: CGFloat,
+        backgroundColor: CGColor?
+    ) -> NSTextField {
+        let labelPadding: CGFloat = 10
+        let textVerticalPadding: CGFloat = 10
+        
+        let feedbackLabel = NSTextField(labelWithString: text)
+        feedbackLabel.font = NSFont.boldSystemFont(ofSize: 24)
+        feedbackLabel.backgroundColor = .clear
+        feedbackLabel.isBordered = false
+        feedbackLabel.isEditable = false
+        feedbackLabel.isSelectable = false
+        feedbackLabel.alignment = .center
+        
+        if let bgColor = backgroundColor {
+            let nsColor = NSColor(cgColor: bgColor) ?? .black
+            feedbackLabel.textColor = nsColor.contrastingColor()
+        } else {
+            feedbackLabel.textColor = .white
+        }
+        
+        let textSize = text.size(withAttributes: [.font: feedbackLabel.font!])
+        feedbackLabel.frame = NSRect(
+            x: labelPadding,
+            y: containerHeight - textSize.height - textVerticalPadding,
+            width: containerWidth - (labelPadding * 2),
+            height: textSize.height
+        )
+        
+        return feedbackLabel
+    }
+    
+    private func createLinePreview(
+        lineColor: NSColor,
+        lineWidth: CGFloat,
+        containerWidth: CGFloat
+    ) -> LinePreviewView {
+        let labelPadding: CGFloat = 10
+        let textVerticalPadding: CGFloat = 10
+        
+        let lineView = LinePreviewView(frame: NSRect(
+            x: labelPadding,
+            y: textVerticalPadding,
+            width: containerWidth - (labelPadding * 2),
+            height: max(lineWidth, 10)
+        ))
+        lineView.lineColor = lineColor
+        lineView.lineWidth = lineWidth
+        
+        return lineView
+    }
+    
+    private func scheduleFeedbackRemoval(
+        containerView: NSView,
+        duration: TimeInterval,
+        fadeOutDuration: TimeInterval
+    ) {
+        let totalDuration = duration + fadeOutDuration
+        let removalTask = DispatchWorkItem { [weak self, weak containerView] in
+            guard let view = containerView else { return }
+            NSAnimationContext.runAnimationGroup({ context in
+                context.duration = fadeOutDuration
+                context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+                view.animator().alphaValue = 0
+            }, completionHandler: {
+                view.removeFromSuperview()
+                if self?.currentFeedbackView == view {
+                    self?.currentFeedbackView = nil
+                }
+            })
+        }
+        
+        feedbackRemovalTask = removalTask
+        DispatchQueue.main.asyncAfter(deadline: .now() + duration, execute: removalTask)
+        
+        // Schedule removal in case animation doesn't complete
+        DispatchQueue.main.asyncAfter(deadline: .now() + totalDuration + 0.5) { [weak self, weak containerView] in
+            guard let view = containerView else { return }
+            if view.superview != nil {
+                view.removeFromSuperview()
+                if self?.currentFeedbackView == view {
+                    self?.currentFeedbackView = nil
+                }
+            }
+        }
+    }
+}
+
+// Helper view to draw a line preview in the feedback overlay
+class LinePreviewView: NSView {
+    var lineColor: NSColor = .white
+    var lineWidth: CGFloat = 3.0
+    
+    override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
+        
+        let path = NSBezierPath()
+        let startPoint = NSPoint(x: 0, y: bounds.midY)
+        let endPoint = NSPoint(x: bounds.width, y: bounds.midY)
+        
+        path.move(to: startPoint)
+        path.line(to: endPoint)
+        
+        lineColor.setStroke()
+        path.lineWidth = lineWidth
+        path.lineCapStyle = .round
+        path.stroke()
     }
 }

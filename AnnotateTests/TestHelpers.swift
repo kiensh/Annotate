@@ -18,37 +18,40 @@ enum TestFactory {
         TimedPoint(point: NSPoint(x: x, y: y), timestamp: timestamp)
     }
 
-    static func createDrawingPath(points: [TimedPoint] = [], color: NSColor = .systemRed)
+    static func createDrawingPath(points: [TimedPoint] = [], color: NSColor = .systemRed, lineWidth: CGFloat = 3.0)
         -> DrawingPath
     {
-        DrawingPath(points: points, color: color)
+        DrawingPath(points: points, color: color, lineWidth: lineWidth)
     }
 
     static func createArrow(
         start: NSPoint = .zero,
         end: NSPoint = NSPoint(x: 100, y: 100),
         color: NSColor = .blue,
+        lineWidth: CGFloat = 3.0,
         time: CFTimeInterval? = nil
     ) -> Arrow {
-        Arrow(startPoint: start, endPoint: end, color: color, creationTime: time)
+        Arrow(startPoint: start, endPoint: end, color: color, lineWidth: lineWidth, creationTime: time)
     }
 
     static func createRectangle(
         start: NSPoint = .zero,
         end: NSPoint = NSPoint(x: 100, y: 100),
         color: NSColor = .green,
+        lineWidth: CGFloat = 3.0,
         time: CFTimeInterval? = nil
     ) -> Rectangle {
-        Rectangle(startPoint: start, endPoint: end, color: color, creationTime: time)
+        Rectangle(startPoint: start, endPoint: end, color: color, lineWidth: lineWidth, creationTime: time)
     }
 
     static func createCircle(
         start: NSPoint = .zero,
         end: NSPoint = NSPoint(x: 100, y: 100),
         color: NSColor = .purple,
+        lineWidth: CGFloat = 3.0,
         time: CFTimeInterval? = nil
     ) -> Circle {
-        Circle(startPoint: start, endPoint: end, color: color, creationTime: time)
+        Circle(startPoint: start, endPoint: end, color: color, lineWidth: lineWidth, creationTime: time)
     }
 
     static func createTextAnnotation(
@@ -98,6 +101,29 @@ enum TestEvents {
             isARepeat: false,
             keyCode: keyCode
         )
+    }
+    
+    static func createScrollEvent(
+        deltaY: CGFloat,
+        modifierFlags: NSEvent.ModifierFlags = []
+    ) -> NSEvent? {
+        // Create a CGEvent for scroll wheel
+        guard let cgEvent = CGEvent(
+            scrollWheelEvent2Source: nil,
+            units: .pixel,
+            wheelCount: 1,
+            wheel1: Int32(deltaY),
+            wheel2: 0,
+            wheel3: 0
+        ) else {
+            return nil
+        }
+        
+        // Set modifier flags
+        cgEvent.flags = CGEventFlags(rawValue: UInt64(modifierFlags.rawValue))
+        
+        // Convert to NSEvent
+        return NSEvent(cgEvent: cgEvent)
     }
 }
 
