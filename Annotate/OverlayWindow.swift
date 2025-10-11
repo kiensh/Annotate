@@ -9,6 +9,11 @@ class OverlayWindow: NSWindow {
     private var wasOptionPressedOnMouseDown = false
     private var isCenterModeActive = false
 
+    // Shift key state tracking for straight line constraint
+    private var isShiftCurrentlyPressed = false
+    private var wasShiftPressedOnMouseDown = false
+    private var isShiftConstraintActive = false
+
     var fadeTimer: Timer?
     let fadeInterval: TimeInterval = 1.0 / 60.0
     
@@ -103,6 +108,8 @@ class OverlayWindow: NSWindow {
         anchorPoint = startPoint
         wasOptionPressedOnMouseDown = event.modifierFlags.contains(.option)
         isCenterModeActive = wasOptionPressedOnMouseDown
+        wasShiftPressedOnMouseDown = event.modifierFlags.contains(.shift)
+        isShiftConstraintActive = wasShiftPressedOnMouseDown
         let clickCount = event.clickCount
 
         if let activeTextField = overlayView.activeTextField {
@@ -236,15 +243,35 @@ class OverlayWindow: NSWindow {
         switch overlayView.currentTool {
         case .pen:
             let t = CACurrentMediaTime()
-            overlayView.currentPath?.points.append(TimedPoint(point: currentPoint, timestamp: t))
+            if isShiftConstraintActive {
+                updatePathWithShiftConstraint(
+                    path: &overlayView.currentPath,
+                    to: currentPoint,
+                    timestamp: t
+                )
+            } else {
+                overlayView.currentPath?.points.append(TimedPoint(point: currentPoint, timestamp: t))
+            }
         case .arrow:
-            overlayView.currentArrow?.endPoint = currentPoint
+            overlayView.currentArrow?.endPoint = isShiftConstraintActive
+                ? snapToStraightLine(from: anchorPoint, to: currentPoint)
+                : currentPoint
         case .line:
-            overlayView.currentLine?.endPoint = currentPoint
+            overlayView.currentLine?.endPoint = isShiftConstraintActive
+                ? snapToStraightLine(from: anchorPoint, to: currentPoint)
+                : currentPoint
         case .highlighter:
             let t = CACurrentMediaTime()
-            overlayView.currentHighlight?.points.append(
-                TimedPoint(point: currentPoint, timestamp: t))
+            if isShiftConstraintActive {
+                updatePathWithShiftConstraint(
+                    path: &overlayView.currentHighlight,
+                    to: currentPoint,
+                    timestamp: t
+                )
+            } else {
+                overlayView.currentHighlight?.points.append(
+                    TimedPoint(point: currentPoint, timestamp: t))
+            }
         case .rectangle:
             if isCenterModeActive {
                 let dx = currentPoint.x - anchorPoint.x
@@ -364,6 +391,8 @@ class OverlayWindow: NSWindow {
         overlayView.needsDisplay = true
         wasOptionPressedOnMouseDown = false
         isCenterModeActive = false
+        wasShiftPressedOnMouseDown = false
+        isShiftConstraintActive = false
 
         if overlayView.fadeMode {
             startFadeLoop()
@@ -450,7 +479,9 @@ class OverlayWindow: NSWindow {
     override func flagsChanged(with event: NSEvent) {
         super.flagsChanged(with: event)
         let optionPressed = event.modifierFlags.contains(.option)
+        let shiftPressed = event.modifierFlags.contains(.shift)
 
+        // Handle Option key for center mode (rectangles and circles)
         if !wasOptionPressedOnMouseDown {
             if !isOptionCurrentlyPressed && optionPressed {
                 recenterAnchorForCurrentShape()
@@ -460,7 +491,19 @@ class OverlayWindow: NSWindow {
             }
         }
 
+        // Handle Shift key for straight line constraint
+        if !wasShiftPressedOnMouseDown {
+            if !isShiftCurrentlyPressed && shiftPressed {
+                // Shift pressed mid-drag - activate constraint
+                isShiftConstraintActive = true
+            } else if isShiftCurrentlyPressed && !shiftPressed {
+                // Shift released mid-drag - deactivate constraint
+                isShiftConstraintActive = false
+            }
+        }
+
         isOptionCurrentlyPressed = optionPressed
+        isShiftCurrentlyPressed = shiftPressed
     }
 
     private func recenterAnchorForCurrentShape() {
@@ -481,6 +524,53 @@ class OverlayWindow: NSWindow {
             )
             anchorPoint = NSPoint(x: boundingRect.midX, y: boundingRect.midY)
         }
+    }
+
+    /// Updates a drawing path with shift constraint, keeping only start and snapped endpoint
+    /// - Parameters:
+    ///   - path: The drawing path to update (pen or highlighter)
+    ///   - current: The current mouse position
+    ///   - timestamp: The current timestamp
+    private func updatePathWithShiftConstraint(
+        path: inout DrawingPath?,
+        to current: NSPoint,
+        timestamp: TimeInterval
+    ) {
+        guard var currentPath = path, !currentPath.points.isEmpty else { return }
+        let startPoint = currentPath.points[0].point
+        let snappedPoint = snapToStraightLine(from: startPoint, to: current)
+        currentPath.points = [
+            TimedPoint(point: startPoint, timestamp: currentPath.points[0].timestamp),
+            TimedPoint(point: snappedPoint, timestamp: timestamp)
+        ]
+        path = currentPath
+    }
+
+    /// Snaps a point to the nearest 45-degree angle from a start point
+    /// - Parameters:
+    ///   - start: The starting point (anchor point)
+    ///   - current: The current mouse position
+    /// - Returns: A new point snapped to the nearest 45-degree increment
+    private func snapToStraightLine(from start: NSPoint, to current: NSPoint) -> NSPoint {
+        let dx = current.x - start.x
+        let dy = current.y - start.y
+        let distance = sqrt(dx * dx + dy * dy)
+
+        // Handle edge case: zero distance
+        guard distance > 0 else {
+            return start
+        }
+
+        let angle = atan2(dy, dx)
+
+        // Find nearest 45-degree increment (π/4 radians)
+        let snapAngle = round(angle / (.pi / 4)) * (.pi / 4)
+
+        // Calculate new endpoint maintaining distance but snapped angle
+        return NSPoint(
+            x: start.x + distance * cos(snapAngle),
+            y: start.y + distance * sin(snapAngle)
+        )
     }
     
     override func scrollWheel(with event: NSEvent) {
