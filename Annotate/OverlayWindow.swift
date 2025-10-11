@@ -649,13 +649,12 @@ class OverlayWindow: NSWindow {
         )
         
         let containerView = NSView(frame: containerFrame)
-        configureFeedbackContainerStyle(containerView, lineColor: lineColor)
-        
+        configureFeedbackContainerStyle(containerView)
+
         let feedbackLabel = createFeedbackLabel(
             text: text,
             containerWidth: containerWidth,
-            containerHeight: containerHeight,
-            backgroundColor: containerView.layer?.backgroundColor
+            containerHeight: containerHeight
         )
         containerView.addSubview(feedbackLabel)
         
@@ -701,16 +700,15 @@ class OverlayWindow: NSWindow {
         )
     }
     
-    private func configureFeedbackContainerStyle(_ containerView: NSView, lineColor: NSColor?) {
+    private func configureFeedbackContainerStyle(_ containerView: NSView) {
         containerView.wantsLayer = true
-        
-        let backgroundColor: NSColor
-        if let lineColor = lineColor {
-            backgroundColor = lineColor.contrastingColor().withAlphaComponent(0.75)
-        } else {
-            backgroundColor = NSColor.black.withAlphaComponent(0.75)
-        }
-        
+
+        // Respect system appearance (Dark Mode vs Light Mode)
+        let isDarkMode = isDarkModeActive()
+        let backgroundColor: NSColor = isDarkMode
+            ? NSColor.black.withAlphaComponent(0.75)
+            : NSColor.white.withAlphaComponent(0.85)
+
         containerView.layer?.backgroundColor = backgroundColor.cgColor
         containerView.layer?.cornerRadius = 8
     }
@@ -718,12 +716,11 @@ class OverlayWindow: NSWindow {
     private func createFeedbackLabel(
         text: String,
         containerWidth: CGFloat,
-        containerHeight: CGFloat,
-        backgroundColor: CGColor?
+        containerHeight: CGFloat
     ) -> NSTextField {
         let labelPadding: CGFloat = 10
         let textVerticalPadding: CGFloat = 10
-        
+
         let feedbackLabel = NSTextField(labelWithString: text)
         feedbackLabel.font = NSFont.boldSystemFont(ofSize: 24)
         feedbackLabel.backgroundColor = .clear
@@ -731,14 +728,10 @@ class OverlayWindow: NSWindow {
         feedbackLabel.isEditable = false
         feedbackLabel.isSelectable = false
         feedbackLabel.alignment = .center
-        
-        if let bgColor = backgroundColor {
-            let nsColor = NSColor(cgColor: bgColor) ?? .black
-            feedbackLabel.textColor = nsColor.contrastingColor()
-        } else {
-            feedbackLabel.textColor = .white
-        }
-        
+
+        // Set text color based on system appearance
+        feedbackLabel.textColor = isDarkModeActive() ? .white : .black
+
         let textSize = text.size(withAttributes: [.font: feedbackLabel.font!])
         feedbackLabel.frame = NSRect(
             x: labelPadding,
@@ -746,7 +739,7 @@ class OverlayWindow: NSWindow {
             width: containerWidth - (labelPadding * 2),
             height: textSize.height
         )
-        
+
         return feedbackLabel
     }
     
@@ -770,6 +763,10 @@ class OverlayWindow: NSWindow {
         return lineView
     }
     
+    private func isDarkModeActive() -> Bool {
+        return NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+    }
+
     private func scheduleFeedbackRemoval(
         containerView: NSView,
         duration: TimeInterval,
