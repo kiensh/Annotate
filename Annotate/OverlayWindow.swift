@@ -543,9 +543,13 @@ class OverlayWindow: NSWindow {
     }
     
     func showToolFeedback(_ tool: ToolType) {
+        // Check if tool feedback is hidden in settings (default: false, meaning show feedback)
+        let hideToolFeedback = UserDefaults.standard.bool(forKey: UserDefaults.hideToolFeedbackKey)
+        guard !hideToolFeedback else { return }
+
         let toolName: String
         let icon: String
-        
+
         switch tool {
         case .pen:
             toolName = "Pen"
@@ -572,13 +576,13 @@ class OverlayWindow: NSWindow {
             toolName = "Text"
             icon = "📝"
         }
-        
+
         // Get current line width
         let currentWidth = overlayView.currentLineWidth
         let widthText = String(format: "%.2f px", currentWidth)
-        
+
         let text = "\(icon) \(toolName) • \(widthText)"
-        
+
         // Show feedback with line preview for tools that use line width
         switch tool {
         case .pen, .arrow, .line, .highlighter, .rectangle, .circle:

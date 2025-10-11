@@ -24,10 +24,10 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
   - ⭕ **Circle** shapes for highlighting areas.
   - 🔢 **Counter** tool for adding sequential numbered circles.
   - 📝 **Text** annotations with drag & edit support.
-- 🎨 **Line Width Control:** Adjust line thickness with an interactive picker or Command+Scroll wheel.
 - ✨ **Fade/Persist Mode:** Control whether annotations fade out after a duration or persist on the screen.
 - 📌 **Always-On Mode:** Display annotations persistently without user interaction.
 - 🌈 **Color Picker:** Easily select and persist your preferred color.
+- ↕️ **Line Width Control:** Adjust line thickness with an interactive picker or Command+Scroll wheel.
 - ⬛ **Board**: Toggle whiteboard or blackboard based on system appearance.
 - 🎛️ **Menu Bar Integration:** Quick access via a status icon.
 - 🧹 **Auto-Clear Option:** Automatically clear all drawings when toggling the overlay.

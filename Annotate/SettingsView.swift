@@ -6,6 +6,8 @@ struct SettingsView: View {
     private var clearDrawingsOnStart = false
     @AppStorage(UserDefaults.hideDockIconKey)
     private var hideDockIcon = false
+    @AppStorage(UserDefaults.hideToolFeedbackKey)
+    private var hideToolFeedback = false
     @State private var shortcuts: [ShortcutKey: String] = ShortcutManager.shared.allShortcuts
     @State private var editingShortcut: ShortcutKey?
     @State private var boardOpacity: Double = BoardManager.shared.opacity
@@ -15,7 +17,7 @@ struct SettingsView: View {
             GroupBox("General") {
                 VStack(alignment: .center, spacing: 12) {
                     KeyboardShortcuts.Recorder("Annotate Hotkey:", name: .toggleOverlay)
-                    
+
                     KeyboardShortcuts.Recorder("Always-On Mode:", name: .toggleAlwaysOnMode)
 
                     Divider()
@@ -24,6 +26,12 @@ struct SettingsView: View {
                         .toggleStyle(.checkbox)
                         .help(
                             "When enabled, all drawings will be cleared each time you toggle the overlay"
+                        )
+
+                    Toggle("Hide Tool Feedback", isOn: $hideToolFeedback)
+                        .toggleStyle(.checkbox)
+                        .help(
+                            "When enabled, hides visual feedback when switching tools (line width feedback always shows)"
                         )
 
                     Toggle("Hide Dock Icon", isOn: $hideDockIcon)
