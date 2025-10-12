@@ -123,6 +123,7 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 | **Clear All**               | <kbd>Option</kbd> + <kbd>Delete</kbd>                | Remove all annotations from the overlay.                        |
 | **Undo**                    | <kbd>Command</kbd> + <kbd>Z</kbd>                    | Undo the last action.                                           |
 | **Redo**                    | <kbd>Command</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd> | Redo the last undone action.                                    |
+| **Constrain to Straight**   | <kbd>Shift</kbd> (while drawing)                     | Constrain lines/arrows to 45° angles; pen/highlighter to straight lines. |
 
 > [!TIP]
 > All tool shortcuts can be customized in Settings.
@@ -133,6 +134,7 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 
 - Click and drag to draw freehand lines
 - Pen creates solid lines while highlighter creates semi-transparent, thicker strokes
+- Hold <kbd>Shift</kbd> while drawing to constrain to a perfectly straight line at 45° angle increments (0°, 45°, 90°, 135°, 180°, 225°, 270°, 315°)
 - Adjust line thickness using the Line Width Picker or <kbd>Command</kbd> + <kbd>Scroll</kbd> for quick adjustments
 
 #### Line Width Control
@@ -160,6 +162,7 @@ Annotate provides flexible line width control:
 #### Arrow & Line
 
 - Click and drag to create directional arrows or straight lines
+- Hold <kbd>Shift</kbd> while drawing to snap to 45° angle increments for perfectly horizontal, vertical, or diagonal lines
 - Arrows automatically create arrowheads pointing in the direction of the drag
 - Lines create simple straight connections between two points
 
@@ -229,3 +232,4 @@ Annotate includes automatic update checking powered by [Sparkle](https://sparkle
 - **Secure Updates**: All updates are cryptographically signed and verified before installation.
 
 Updates are downloaded and installed seamlessly in the background. You'll be notified when a new version is available, with release notes and the option to install immediately or later.
+
