@@ -20,6 +20,13 @@ class OverlayWindow: NSWindow {
     // Track the current feedback view to remove it when a new one appears
     private var currentFeedbackView: NSView?
     private var feedbackRemovalTask: DispatchWorkItem?
+    
+    // Create undo manager for this window
+    private let _undoManager = UndoManager()
+    
+    override var undoManager: UndoManager? {
+        return _undoManager
+    }
 
     var currentColor: NSColor {
         get { overlayView.currentColor }
@@ -754,6 +761,23 @@ class OverlayWindow: NSWindow {
         } else {
             // Default scroll behavior
             super.scrollWheel(with: event)
+        }
+    }
+    
+    // Support for mouse backward/forward buttons (typically buttons 3 and 4)
+    override func otherMouseDown(with event: NSEvent) {
+        // Button numbers:
+        // 2 = middle mouse button
+        // 3 = backward button (typically)
+        // 4 = forward button (typically)
+        
+        switch event.buttonNumber {
+        case 3:  // Backward button - Undo
+            overlayView.undo()
+        case 4:  // Forward button - Redo
+            overlayView.redo()
+        default:
+            super.otherMouseDown(with: event)
         }
     }
     

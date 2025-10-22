@@ -145,6 +145,8 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 | <kbd>Option</kbd> + <kbd>Delete</kbd> | **Clear All** | Remove all annotations |
 | <kbd>Command</kbd> + <kbd>Z</kbd> | **Undo** | Undo the last action |
 | <kbd>Command</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd> | **Redo** | Redo the last undone action |
+| Mouse Backward Button | **Undo** | Undo the last action (mouse button 3) |
+| Mouse Forward Button | **Redo** | Redo the last undone action (mouse button 4) |
 | <kbd>Command</kbd> + <kbd>Scroll</kbd> | **Adjust Width** | Quickly change line width |
 | <kbd>Shift</kbd> (while drawing) | **Constrain** | Lines: 45° angles; Pen/Highlighter: straight |
 
