@@ -72,10 +72,11 @@ class OverlayView: NSView, NSTextFieldDelegate {
     }
 
     func registerUndo(action: DrawingAction) {
+        let manager = undoManager
         switch action {
         case .addPath(let path):
-            undoManager?.registerUndo(withTarget: self) { target in
-                Task { @MainActor in
+            manager?.registerUndo(withTarget: self) { target in
+                MainActor.assumeIsolated {
                     if !target.paths.isEmpty {
                         target.paths.removeLast()
                         target.registerUndo(action: .removePath(path))
@@ -84,8 +85,8 @@ class OverlayView: NSView, NSTextFieldDelegate {
                 }
             }
         case .addArrow(let arrow):
-            undoManager?.registerUndo(withTarget: self) { target in
-                Task { @MainActor in
+            manager?.registerUndo(withTarget: self) { target in
+                MainActor.assumeIsolated {
                     if !target.arrows.isEmpty {
                         target.arrows.removeLast()
                         target.registerUndo(action: .removeArrow(arrow))
@@ -94,8 +95,8 @@ class OverlayView: NSView, NSTextFieldDelegate {
                 }
             }
         case .addLine(let line):
-            undoManager?.registerUndo(withTarget: self) { target in
-                Task { @MainActor in
+            manager?.registerUndo(withTarget: self) { target in
+                MainActor.assumeIsolated {
                     if !target.lines.isEmpty {
                         target.lines.removeLast()
                         target.registerUndo(action: .removeLine(line))
@@ -104,8 +105,8 @@ class OverlayView: NSView, NSTextFieldDelegate {
                 }
             }
         case .addHighlight(let highlight):
-            undoManager?.registerUndo(withTarget: self) { target in
-                Task { @MainActor in
+            manager?.registerUndo(withTarget: self) { target in
+                MainActor.assumeIsolated {
                     if !target.highlightPaths.isEmpty {
                         target.highlightPaths.removeLast()
                         target.registerUndo(action: .removeHighlight(highlight))
@@ -114,40 +115,40 @@ class OverlayView: NSView, NSTextFieldDelegate {
                 }
             }
         case .removePath(let path):
-            undoManager?.registerUndo(withTarget: self) { target in
-                Task { @MainActor in
+            manager?.registerUndo(withTarget: self) { target in
+                MainActor.assumeIsolated {
                     target.paths.append(path)
                     target.registerUndo(action: .addPath(path))
                     target.needsDisplay = true
                 }
             }
         case .removeArrow(let arrow):
-            undoManager?.registerUndo(withTarget: self) { target in
-                Task { @MainActor in
+            manager?.registerUndo(withTarget: self) { target in
+                MainActor.assumeIsolated {
                     target.arrows.append(arrow)
                     target.registerUndo(action: .addArrow(arrow))
                     target.needsDisplay = true
                 }
             }
         case .removeLine(let line):
-            undoManager?.registerUndo(withTarget: self) { target in
-                Task { @MainActor in
+            manager?.registerUndo(withTarget: self) { target in
+                MainActor.assumeIsolated {
                     target.lines.append(line)
                     target.registerUndo(action: .addLine(line))
                     target.needsDisplay = true
                 }
             }
         case .removeHighlight(let highlight):
-            undoManager?.registerUndo(withTarget: self) { target in
-                Task { @MainActor in
+            manager?.registerUndo(withTarget: self) { target in
+                MainActor.assumeIsolated {
                     target.highlightPaths.append(highlight)
                     target.registerUndo(action: .addHighlight(highlight))
                     target.needsDisplay = true
                 }
             }
         case .addRectangle(let rectangle):
-            undoManager?.registerUndo(withTarget: self) { target in
-                Task { @MainActor in
+            manager?.registerUndo(withTarget: self) { target in
+                MainActor.assumeIsolated {
                     if !target.rectangles.isEmpty {
                         target.rectangles.removeLast()
                         target.registerUndo(action: .removeRectangle(rectangle))
@@ -156,16 +157,16 @@ class OverlayView: NSView, NSTextFieldDelegate {
                 }
             }
         case .removeRectangle(let rectangle):
-            undoManager?.registerUndo(withTarget: self) { target in
-                Task { @MainActor in
+            manager?.registerUndo(withTarget: self) { target in
+                MainActor.assumeIsolated {
                     target.rectangles.append(rectangle)
                     target.registerUndo(action: .addRectangle(rectangle))
                     target.needsDisplay = true
                 }
             }
         case .addCircle(let circle):
-            undoManager?.registerUndo(withTarget: self) { target in
-                Task { @MainActor in
+            manager?.registerUndo(withTarget: self) { target in
+                MainActor.assumeIsolated {
                     if !target.circles.isEmpty {
                         target.circles.removeLast()
                         target.registerUndo(action: .removeCircle(circle))
@@ -174,16 +175,16 @@ class OverlayView: NSView, NSTextFieldDelegate {
                 }
             }
         case .removeCircle(let circle):
-            undoManager?.registerUndo(withTarget: self) { target in
-                Task { @MainActor in
+            manager?.registerUndo(withTarget: self) { target in
+                MainActor.assumeIsolated {
                     target.circles.append(circle)
                     target.registerUndo(action: .addCircle(circle))
                     target.needsDisplay = true
                 }
             }
         case .addText(let annotation):
-            undoManager?.registerUndo(withTarget: self) { target in
-                Task { @MainActor in
+            manager?.registerUndo(withTarget: self) { target in
+                MainActor.assumeIsolated {
                     if !target.textAnnotations.isEmpty {
                         target.textAnnotations.removeLast()
                         target.registerUndo(action: .removeText(annotation))
@@ -192,24 +193,26 @@ class OverlayView: NSView, NSTextFieldDelegate {
                 }
             }
         case .removeText(let annotation):
-            undoManager?.registerUndo(withTarget: self) { target in
-                Task { @MainActor in
+            manager?.registerUndo(withTarget: self) { target in
+                MainActor.assumeIsolated {
                     target.textAnnotations.append(annotation)
                     target.registerUndo(action: .addText(annotation))
                     target.needsDisplay = true
                 }
             }
         case .moveText(let index, let oldPosition, let newPosition):
-            undoManager?.registerUndo(withTarget: self) { target in
-                Task { @MainActor in
-                    target.textAnnotations[index].position = oldPosition
-                    target.registerUndo(action: .moveText(index, newPosition, oldPosition))
-                    target.needsDisplay = true
+            manager?.registerUndo(withTarget: self) { target in
+                MainActor.assumeIsolated {
+                    if index < target.textAnnotations.count {
+                        target.textAnnotations[index].position = oldPosition
+                        target.registerUndo(action: .moveText(index, newPosition, oldPosition))
+                        target.needsDisplay = true
+                    }
                 }
             }
         case .moveArrow(let index, let fromStart, let fromEnd, let toStart, let toEnd):
-            undoManager?.registerUndo(withTarget: self) { target in
-                Task { @MainActor in
+            manager?.registerUndo(withTarget: self) { target in
+                MainActor.assumeIsolated {
                     if index < target.arrows.count {
                         target.arrows[index].startPoint = fromStart
                         target.arrows[index].endPoint = fromEnd
@@ -219,8 +222,8 @@ class OverlayView: NSView, NSTextFieldDelegate {
                 }
             }
         case .moveLine(let index, let fromStart, let fromEnd, let toStart, let toEnd):
-            undoManager?.registerUndo(withTarget: self) { target in
-                Task { @MainActor in
+            manager?.registerUndo(withTarget: self) { target in
+                MainActor.assumeIsolated {
                     if index < target.lines.count {
                         target.lines[index].startPoint = fromStart
                         target.lines[index].endPoint = fromEnd
@@ -230,8 +233,8 @@ class OverlayView: NSView, NSTextFieldDelegate {
                 }
             }
         case .moveRectangle(let index, let fromStart, let fromEnd, let toStart, let toEnd):
-            undoManager?.registerUndo(withTarget: self) { target in
-                Task { @MainActor in
+            manager?.registerUndo(withTarget: self) { target in
+                MainActor.assumeIsolated {
                     if index < target.rectangles.count {
                         target.rectangles[index].startPoint = fromStart
                         target.rectangles[index].endPoint = fromEnd
@@ -241,8 +244,8 @@ class OverlayView: NSView, NSTextFieldDelegate {
                 }
             }
         case .moveCircle(let index, let fromStart, let fromEnd, let toStart, let toEnd):
-            undoManager?.registerUndo(withTarget: self) { target in
-                Task { @MainActor in
+            manager?.registerUndo(withTarget: self) { target in
+                MainActor.assumeIsolated {
                     if index < target.circles.count {
                         target.circles[index].startPoint = fromStart
                         target.circles[index].endPoint = fromEnd
@@ -252,8 +255,8 @@ class OverlayView: NSView, NSTextFieldDelegate {
                 }
             }
         case .movePath(let index, let delta):
-            undoManager?.registerUndo(withTarget: self) { target in
-                Task { @MainActor in
+            manager?.registerUndo(withTarget: self) { target in
+                MainActor.assumeIsolated {
                     if index < target.paths.count {
                         // Undo: move back by negative delta
                         for i in 0..<target.paths[index].points.count {
@@ -266,8 +269,8 @@ class OverlayView: NSView, NSTextFieldDelegate {
                 }
             }
         case .moveHighlight(let index, let delta):
-            undoManager?.registerUndo(withTarget: self) { target in
-                Task { @MainActor in
+            manager?.registerUndo(withTarget: self) { target in
+                MainActor.assumeIsolated {
                     if index < target.highlightPaths.count {
                         // Undo: move back by negative delta
                         for i in 0..<target.highlightPaths[index].points.count {
@@ -280,8 +283,8 @@ class OverlayView: NSView, NSTextFieldDelegate {
                 }
             }
         case .moveCounter(let index, let from, let to):
-            undoManager?.registerUndo(withTarget: self) { target in
-                Task { @MainActor in
+            manager?.registerUndo(withTarget: self) { target in
+                MainActor.assumeIsolated {
                     if index < target.counterAnnotations.count {
                         target.counterAnnotations[index].position = from
                         target.registerUndo(action: .moveCounter(index, to, from))
@@ -290,8 +293,8 @@ class OverlayView: NSView, NSTextFieldDelegate {
                 }
             }
         case .addCounter(let counter):
-            undoManager?.registerUndo(withTarget: self) { target in
-                Task { @MainActor in
+            manager?.registerUndo(withTarget: self) { target in
+                MainActor.assumeIsolated {
                     if !target.counterAnnotations.isEmpty {
                         target.counterAnnotations.removeLast()
                         target.nextCounterNumber = max(1, target.nextCounterNumber - 1)
@@ -301,8 +304,8 @@ class OverlayView: NSView, NSTextFieldDelegate {
                 }
             }
         case .removeCounter(let counter):
-            undoManager?.registerUndo(withTarget: self) { target in
-                Task { @MainActor in
+            manager?.registerUndo(withTarget: self) { target in
+                MainActor.assumeIsolated {
                     target.counterAnnotations.append(counter)
                     target.nextCounterNumber = max(target.nextCounterNumber, counter.number + 1)
                     target.registerUndo(action: .addCounter(counter))
@@ -313,8 +316,8 @@ class OverlayView: NSView, NSTextFieldDelegate {
             let paths, let arrows, let lines, let highlights, let rectangles, let circles,
             let textAnnotations,
             let counterAnnotations):
-            undoManager?.registerUndo(withTarget: self) { target in
-                Task { @MainActor in
+            manager?.registerUndo(withTarget: self) { target in
+                MainActor.assumeIsolated {
                     target.paths = paths
                     target.arrows = arrows
                     target.lines = lines
