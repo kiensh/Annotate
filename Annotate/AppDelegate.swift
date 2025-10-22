@@ -167,6 +167,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
                 keyEquivalent: ShortcutManager.shared.getShortcut(for: .text))
             textModeItem.keyEquivalentModifierMask = []
             menu.addItem(textModeItem)
+            
+            let selectModeItem = NSMenuItem(
+                title: "Select",
+                action: #selector(enableSelectMode(_:)),
+                keyEquivalent: ShortcutManager.shared.getShortcut(for: .select))
+            selectModeItem.keyEquivalentModifierMask = []
+            menu.addItem(selectModeItem)
 
             menu.addItem(NSMenuItem.separator())
 
@@ -499,6 +506,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
     @objc func enableTextMode(_ sender: NSMenuItem) {
         switchTool(to: .text)
         updateCurrentToolMenuItem(to: "Text")
+    }
+    
+    @objc func enableSelectMode(_ sender: NSMenuItem) {
+        switchTool(to: .select)
+        updateCurrentToolMenuItem(to: "Select")
     }
 
     @objc func toggleBoardVisibility(_ sender: Any?) {

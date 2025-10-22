@@ -33,6 +33,16 @@ class OverlayView: NSView, NSTextFieldDelegate {
     var counterAnnotations: [CounterAnnotation] = []
     var nextCounterNumber: Int = 1
 
+    // Selection state
+    var selectedObjects: Set<SelectedObject> = []  // Changed to Set for multiple selection
+    var selectionDragOffset: NSPoint?
+    var selectionOriginalData: [SelectedObject: Any] = [:]  // Map of object to original position
+    
+    // Rectangle selection zone
+    var isDrawingSelectionRect: Bool = false
+    var selectionRectStart: NSPoint?
+    var selectionRectEnd: NSPoint?
+    
     var currentColor: NSColor = .systemRed
     var currentTool: ToolType = .pen
     var currentLineWidth: CGFloat = 3.0
@@ -195,6 +205,88 @@ class OverlayView: NSView, NSTextFieldDelegate {
                     target.textAnnotations[index].position = oldPosition
                     target.registerUndo(action: .moveText(index, newPosition, oldPosition))
                     target.needsDisplay = true
+                }
+            }
+        case .moveArrow(let index, let fromStart, let fromEnd, let toStart, let toEnd):
+            undoManager?.registerUndo(withTarget: self) { target in
+                Task { @MainActor in
+                    if index < target.arrows.count {
+                        target.arrows[index].startPoint = fromStart
+                        target.arrows[index].endPoint = fromEnd
+                        target.registerUndo(action: .moveArrow(index, toStart, toEnd, fromStart, fromEnd))
+                        target.needsDisplay = true
+                    }
+                }
+            }
+        case .moveLine(let index, let fromStart, let fromEnd, let toStart, let toEnd):
+            undoManager?.registerUndo(withTarget: self) { target in
+                Task { @MainActor in
+                    if index < target.lines.count {
+                        target.lines[index].startPoint = fromStart
+                        target.lines[index].endPoint = fromEnd
+                        target.registerUndo(action: .moveLine(index, toStart, toEnd, fromStart, fromEnd))
+                        target.needsDisplay = true
+                    }
+                }
+            }
+        case .moveRectangle(let index, let fromStart, let fromEnd, let toStart, let toEnd):
+            undoManager?.registerUndo(withTarget: self) { target in
+                Task { @MainActor in
+                    if index < target.rectangles.count {
+                        target.rectangles[index].startPoint = fromStart
+                        target.rectangles[index].endPoint = fromEnd
+                        target.registerUndo(action: .moveRectangle(index, toStart, toEnd, fromStart, fromEnd))
+                        target.needsDisplay = true
+                    }
+                }
+            }
+        case .moveCircle(let index, let fromStart, let fromEnd, let toStart, let toEnd):
+            undoManager?.registerUndo(withTarget: self) { target in
+                Task { @MainActor in
+                    if index < target.circles.count {
+                        target.circles[index].startPoint = fromStart
+                        target.circles[index].endPoint = fromEnd
+                        target.registerUndo(action: .moveCircle(index, toStart, toEnd, fromStart, fromEnd))
+                        target.needsDisplay = true
+                    }
+                }
+            }
+        case .movePath(let index, let delta):
+            undoManager?.registerUndo(withTarget: self) { target in
+                Task { @MainActor in
+                    if index < target.paths.count {
+                        // Undo: move back by negative delta
+                        for i in 0..<target.paths[index].points.count {
+                            target.paths[index].points[i].point.x -= delta.x
+                            target.paths[index].points[i].point.y -= delta.y
+                        }
+                        target.registerUndo(action: .movePath(index, NSPoint(x: -delta.x, y: -delta.y)))
+                        target.needsDisplay = true
+                    }
+                }
+            }
+        case .moveHighlight(let index, let delta):
+            undoManager?.registerUndo(withTarget: self) { target in
+                Task { @MainActor in
+                    if index < target.highlightPaths.count {
+                        // Undo: move back by negative delta
+                        for i in 0..<target.highlightPaths[index].points.count {
+                            target.highlightPaths[index].points[i].point.x -= delta.x
+                            target.highlightPaths[index].points[i].point.y -= delta.y
+                        }
+                        target.registerUndo(action: .moveHighlight(index, NSPoint(x: -delta.x, y: -delta.y)))
+                        target.needsDisplay = true
+                    }
+                }
+            }
+        case .moveCounter(let index, let from, let to):
+            undoManager?.registerUndo(withTarget: self) { target in
+                Task { @MainActor in
+                    if index < target.counterAnnotations.count {
+                        target.counterAnnotations[index].position = from
+                        target.registerUndo(action: .moveCounter(index, to, from))
+                        target.needsDisplay = true
+                    }
                 }
             }
         case .addCounter(let counter):
@@ -405,6 +497,173 @@ class OverlayView: NSView, NSTextFieldDelegate {
             }
         }
         counterAnnotations = aliveCounters
+        
+        // Draw selection bounding box for all selected objects
+        if !selectedObjects.isEmpty {
+            let boundingBox = calculateSelectionBoundingBox()
+            drawSelectionBoundingBox(boundingBox)
+        }
+        
+        // Draw selection rectangle if being drawn
+        if isDrawingSelectionRect, let start = selectionRectStart, let end = selectionRectEnd {
+            let rect = NSRect(
+                x: min(start.x, end.x),
+                y: min(start.y, end.y),
+                width: abs(end.x - start.x),
+                height: abs(end.y - start.y)
+            )
+            
+            let path = NSBezierPath(rect: rect)
+            path.lineWidth = 1.0
+            path.setLineDash([4.0, 2.0], count: 2, phase: 0)
+            NSColor.systemBlue.withAlphaComponent(0.3).setFill()
+            NSColor.systemBlue.setStroke()
+            path.fill()
+            path.stroke()
+        }
+    }
+    
+    // MARK: - Selection Bounding Box
+    
+    private func calculateSelectionBoundingBox() -> NSRect {
+        guard !selectedObjects.isEmpty else { return .zero }
+        
+        var minX = CGFloat.greatestFiniteMagnitude
+        var minY = CGFloat.greatestFiniteMagnitude
+        var maxX = -CGFloat.greatestFiniteMagnitude
+        var maxY = -CGFloat.greatestFiniteMagnitude
+        
+        for obj in selectedObjects {
+            let objBounds = getObjectBounds(obj)
+            minX = min(minX, objBounds.minX)
+            minY = min(minY, objBounds.minY)
+            maxX = max(maxX, objBounds.maxX)
+            maxY = max(maxY, objBounds.maxY)
+        }
+        
+        // Add padding
+        let padding: CGFloat = 5.0
+        return NSRect(
+            x: minX - padding,
+            y: minY - padding,
+            width: (maxX - minX) + (padding * 2),
+            height: (maxY - minY) + (padding * 2)
+        )
+    }
+    
+    private func getObjectBounds(_ object: SelectedObject) -> NSRect {
+        switch object {
+        case .arrow(let index):
+            guard index < arrows.count else { return .zero }
+            let arrow = arrows[index]
+            return NSRect(
+                x: min(arrow.startPoint.x, arrow.endPoint.x),
+                y: min(arrow.startPoint.y, arrow.endPoint.y),
+                width: abs(arrow.endPoint.x - arrow.startPoint.x),
+                height: abs(arrow.endPoint.y - arrow.startPoint.y)
+            )
+            
+        case .line(let index):
+            guard index < lines.count else { return .zero }
+            let line = lines[index]
+            return NSRect(
+                x: min(line.startPoint.x, line.endPoint.x),
+                y: min(line.startPoint.y, line.endPoint.y),
+                width: abs(line.endPoint.x - line.startPoint.x),
+                height: abs(line.endPoint.y - line.startPoint.y)
+            )
+            
+        case .rectangle(let index):
+            guard index < rectangles.count else { return .zero }
+            let rect = rectangles[index]
+            return NSRect(
+                x: min(rect.startPoint.x, rect.endPoint.x),
+                y: min(rect.startPoint.y, rect.endPoint.y),
+                width: abs(rect.endPoint.x - rect.startPoint.x),
+                height: abs(rect.endPoint.y - rect.startPoint.y)
+            )
+            
+        case .circle(let index):
+            guard index < circles.count else { return .zero }
+            let circle = circles[index]
+            return NSRect(
+                x: min(circle.startPoint.x, circle.endPoint.x),
+                y: min(circle.startPoint.y, circle.endPoint.y),
+                width: abs(circle.endPoint.x - circle.startPoint.x),
+                height: abs(circle.endPoint.y - circle.startPoint.y)
+            )
+            
+        case .path(let index):
+            guard index < paths.count else { return .zero }
+            let path = paths[index]
+            guard !path.points.isEmpty else { return .zero }
+            
+            var minX = path.points[0].point.x
+            var minY = path.points[0].point.y
+            var maxX = path.points[0].point.x
+            var maxY = path.points[0].point.y
+            
+            for point in path.points {
+                minX = min(minX, point.point.x)
+                minY = min(minY, point.point.y)
+                maxX = max(maxX, point.point.x)
+                maxY = max(maxY, point.point.y)
+            }
+            
+            return NSRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
+            
+        case .highlight(let index):
+            guard index < highlightPaths.count else { return .zero }
+            let path = highlightPaths[index]
+            guard !path.points.isEmpty else { return .zero }
+            
+            var minX = path.points[0].point.x
+            var minY = path.points[0].point.y
+            var maxX = path.points[0].point.x
+            var maxY = path.points[0].point.y
+            
+            for point in path.points {
+                minX = min(minX, point.point.x)
+                minY = min(minY, point.point.y)
+                maxX = max(maxX, point.point.x)
+                maxY = max(maxY, point.point.y)
+            }
+            
+            return NSRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
+            
+        case .text(let index):
+            guard index < textAnnotations.count else { return .zero }
+            return getTextRect(for: textAnnotations[index])
+            
+        case .counter(let index):
+            guard index < counterAnnotations.count else { return .zero }
+            let counter = counterAnnotations[index]
+            let radius: CGFloat = 15.0
+            return NSRect(
+                x: counter.position.x - radius,
+                y: counter.position.y - radius,
+                width: radius * 2,
+                height: radius * 2
+            )
+            
+        case .none:
+            return .zero
+        }
+    }
+    
+    private func drawSelectionBoundingBox(_ rect: NSRect) {
+        let path = NSBezierPath(rect: rect)
+        path.lineWidth = 2.0
+        path.setLineDash([5.0, 3.0], count: 2, phase: 0)
+        NSColor.systemBlue.withAlphaComponent(0.8).setStroke()
+        path.stroke()
+    }
+    
+    /// Check if a point is inside the bounding box of any selected object
+    func isPointInSelectionBoundingBox(_ point: NSPoint) -> Bool {
+        guard !selectedObjects.isEmpty else { return false }
+        let boundingBox = calculateSelectionBoundingBox()
+        return boundingBox.contains(point)
     }
 
     private func alphaForAge(_ age: CFTimeInterval) -> CGFloat {
@@ -413,7 +672,8 @@ class OverlayView: NSView, NSTextFieldDelegate {
         let fadeOut = fadeDelay - (age - fadeDelay)
         return CGFloat(max(0, fadeOut))
     }
-
+    
+    
     private func drawPathWithFading(_ path: DrawingPath, now: CFTimeInterval, isHighlighter: Bool)
         -> [TimedPoint]
     {
@@ -713,8 +973,104 @@ class OverlayView: NSView, NSTextFieldDelegate {
             registerUndo(action: .removeCounter(lastCounter))
             counterAnnotations.removeLast()
             nextCounterNumber = max(1, nextCounterNumber - 1)
+        case .select:
+            // In select mode, delete the selected objects if any
+            if !selectedObjects.isEmpty {
+                deleteSelectedObjects()
+            }
         }
         needsDisplay = true
+    }
+    
+    func deleteSelectedObjects() {
+        guard !selectedObjects.isEmpty else { return }
+        
+        // Sort objects by type and index (descending) to delete from end first
+        // This prevents index shifting issues
+        let sortedObjects = selectedObjects.sorted { obj1, obj2 in
+            // Helper to get sortable value
+            func getSortValue(_ obj: SelectedObject) -> (Int, Int) {
+                switch obj {
+                case .arrow(let idx): return (0, idx)
+                case .line(let idx): return (1, idx)
+                case .rectangle(let idx): return (2, idx)
+                case .circle(let idx): return (3, idx)
+                case .path(let idx): return (4, idx)
+                case .highlight(let idx): return (5, idx)
+                case .text(let idx): return (6, idx)
+                case .counter(let idx): return (7, idx)
+                case .none: return (99, 0)
+                }
+            }
+            let (type1, idx1) = getSortValue(obj1)
+            let (type2, idx2) = getSortValue(obj2)
+            if type1 != type2 { return type1 < type2 }
+            return idx1 > idx2 // Descending index order
+        }
+        
+        for object in sortedObjects {
+            deleteObject(object)
+        }
+        
+        // Clear selection after deletion
+        selectedObjects.removeAll()
+        needsDisplay = true
+    }
+    
+    private func deleteObject(_ object: SelectedObject) {
+        switch object {
+        case .arrow(let index):
+            guard index < arrows.count else { return }
+            let arrow = arrows[index]
+            registerUndo(action: .removeArrow(arrow))
+            arrows.remove(at: index)
+            
+        case .line(let index):
+            guard index < lines.count else { return }
+            let line = lines[index]
+            registerUndo(action: .removeLine(line))
+            lines.remove(at: index)
+            
+        case .rectangle(let index):
+            guard index < rectangles.count else { return }
+            let rect = rectangles[index]
+            registerUndo(action: .removeRectangle(rect))
+            rectangles.remove(at: index)
+            
+        case .circle(let index):
+            guard index < circles.count else { return }
+            let circle = circles[index]
+            registerUndo(action: .removeCircle(circle))
+            circles.remove(at: index)
+            
+        case .path(let index):
+            guard index < paths.count else { return }
+            let path = paths[index]
+            registerUndo(action: .removePath(path))
+            paths.remove(at: index)
+            
+        case .highlight(let index):
+            guard index < highlightPaths.count else { return }
+            let highlight = highlightPaths[index]
+            registerUndo(action: .removeHighlight(highlight))
+            highlightPaths.remove(at: index)
+            
+        case .text(let index):
+            guard index < textAnnotations.count else { return }
+            let text = textAnnotations[index]
+            registerUndo(action: .removeText(text))
+            textAnnotations.remove(at: index)
+            
+        case .counter(let index):
+            guard index < counterAnnotations.count else { return }
+            let counter = counterAnnotations[index]
+            registerUndo(action: .removeCounter(counter))
+            counterAnnotations.remove(at: index)
+            nextCounterNumber = max(1, nextCounterNumber - 1)
+            
+        case .none:
+            break
+        }
     }
 
     func createTextField(
@@ -893,4 +1249,627 @@ class OverlayView: NSView, NSTextFieldDelegate {
         adaptColorsToBoardType = boardEnabled
         needsDisplay = true
     }
+    
+    // MARK: - Selection and Hit Testing
+    
+    /// Find object at point, checking in reverse order (topmost/latest first)
+    func findObjectAt(point: NSPoint) -> SelectedObject {
+        // Check in reverse order - last drawn is on top
+        
+        // 1. Check counters
+        for (index, counter) in counterAnnotations.enumerated().reversed() {
+            if hitTestCounter(counter, point: point) {
+                return .counter(index: index)
+            }
+        }
+        
+        // 2. Check text annotations
+        for (index, text) in textAnnotations.enumerated().reversed() {
+            if hitTestText(text, point: point) {
+                return .text(index: index)
+            }
+        }
+        
+        // 3. Check circles
+        for (index, circle) in circles.enumerated().reversed() {
+            if hitTestCircle(circle, point: point) {
+                return .circle(index: index)
+            }
+        }
+        
+        // 4. Check rectangles
+        for (index, rect) in rectangles.enumerated().reversed() {
+            if hitTestRectangle(rect, point: point) {
+                return .rectangle(index: index)
+            }
+        }
+        
+        // 5. Check highlight paths
+        for (index, path) in highlightPaths.enumerated().reversed() {
+            if hitTestHighlightPath(path, point: point) {
+                return .highlight(index: index)
+            }
+        }
+        
+        // 6. Check regular paths
+        for (index, path) in paths.enumerated().reversed() {
+            if hitTestPath(path, point: point) {
+                return .path(index: index)
+            }
+        }
+        
+        // 7. Check lines
+        for (index, line) in lines.enumerated().reversed() {
+            if hitTestLine(line, point: point) {
+                return .line(index: index)
+            }
+        }
+        
+        // 8. Check arrows
+        for (index, arrow) in arrows.enumerated().reversed() {
+            if hitTestArrow(arrow, point: point) {
+                return .arrow(index: index)
+            }
+        }
+        
+        return .none
+    }
+    
+    /// Find all objects that intersect with the given rectangle
+    func findObjectsInRect(_ rect: NSRect) -> Set<SelectedObject> {
+        var foundObjects = Set<SelectedObject>()
+        
+        // Check counters
+        for (index, _) in counterAnnotations.enumerated() {
+            if objectIntersectsRect(.counter(index: index), rect: rect) {
+                foundObjects.insert(.counter(index: index))
+            }
+        }
+        
+        // Check text annotations
+        for (index, _) in textAnnotations.enumerated() {
+            if objectIntersectsRect(.text(index: index), rect: rect) {
+                foundObjects.insert(.text(index: index))
+            }
+        }
+        
+        // Check circles
+        for (index, _) in circles.enumerated() {
+            if objectIntersectsRect(.circle(index: index), rect: rect) {
+                foundObjects.insert(.circle(index: index))
+            }
+        }
+        
+        // Check rectangles
+        for (index, _) in rectangles.enumerated() {
+            if objectIntersectsRect(.rectangle(index: index), rect: rect) {
+                foundObjects.insert(.rectangle(index: index))
+            }
+        }
+        
+        // Check highlight paths
+        for (index, _) in highlightPaths.enumerated() {
+            if objectIntersectsRect(.highlight(index: index), rect: rect) {
+                foundObjects.insert(.highlight(index: index))
+            }
+        }
+        
+        // Check regular paths
+        for (index, _) in paths.enumerated() {
+            if objectIntersectsRect(.path(index: index), rect: rect) {
+                foundObjects.insert(.path(index: index))
+            }
+        }
+        
+        // Check lines
+        for (index, _) in lines.enumerated() {
+            if objectIntersectsRect(.line(index: index), rect: rect) {
+                foundObjects.insert(.line(index: index))
+            }
+        }
+        
+        // Check arrows
+        for (index, _) in arrows.enumerated() {
+            if objectIntersectsRect(.arrow(index: index), rect: rect) {
+                foundObjects.insert(.arrow(index: index))
+            }
+        }
+        
+        return foundObjects
+    }
+    
+    /// Check if an object intersects with a rectangle
+    private func objectIntersectsRect(_ object: SelectedObject, rect: NSRect) -> Bool {
+        switch object {
+        case .arrow(let index):
+            guard index < arrows.count else { return false }
+            let arrow = arrows[index]
+            return lineSegmentIntersectsRect(start: arrow.startPoint, end: arrow.endPoint, rect: rect)
+            
+        case .line(let index):
+            guard index < lines.count else { return false }
+            let line = lines[index]
+            return lineSegmentIntersectsRect(start: line.startPoint, end: line.endPoint, rect: rect)
+            
+        case .rectangle(let index):
+            guard index < rectangles.count else { return false }
+            let r = rectangles[index]
+            let objRect = NSRect(
+                x: min(r.startPoint.x, r.endPoint.x),
+                y: min(r.startPoint.y, r.endPoint.y),
+                width: abs(r.endPoint.x - r.startPoint.x),
+                height: abs(r.endPoint.y - r.startPoint.y)
+            )
+            return rect.intersects(objRect)
+            
+        case .circle(let index):
+            guard index < circles.count else { return false }
+            let c = circles[index]
+            let circleRect = NSRect(
+                x: min(c.startPoint.x, c.endPoint.x),
+                y: min(c.startPoint.y, c.endPoint.y),
+                width: abs(c.endPoint.x - c.startPoint.x),
+                height: abs(c.endPoint.y - c.startPoint.y)
+            )
+            return rect.intersects(circleRect)
+            
+        case .path(let index):
+            guard index < paths.count else { return false }
+            let path = paths[index]
+            for point in path.points {
+                if rect.contains(point.point) {
+                    return true
+                }
+            }
+            return false
+            
+        case .highlight(let index):
+            guard index < highlightPaths.count else { return false }
+            let path = highlightPaths[index]
+            for point in path.points {
+                if rect.contains(point.point) {
+                    return true
+                }
+            }
+            return false
+            
+        case .text(let index):
+            guard index < textAnnotations.count else { return false }
+            let textRect = getTextRect(for: textAnnotations[index])
+            return rect.intersects(textRect)
+            
+        case .counter(let index):
+            guard index < counterAnnotations.count else { return false }
+            return rect.contains(counterAnnotations[index].position)
+            
+        case .none:
+            return false
+        }
+    }
+    
+    /// Check if a line segment intersects with a rectangle
+    private func lineSegmentIntersectsRect(start: NSPoint, end: NSPoint, rect: NSRect) -> Bool {
+        // Check if either endpoint is inside the rectangle
+        if rect.contains(start) || rect.contains(end) {
+            return true
+        }
+        
+        // Check if line intersects any edge of the rectangle
+        let edges = [
+            (NSPoint(x: rect.minX, y: rect.minY), NSPoint(x: rect.maxX, y: rect.minY)), // Bottom
+            (NSPoint(x: rect.maxX, y: rect.minY), NSPoint(x: rect.maxX, y: rect.maxY)), // Right
+            (NSPoint(x: rect.maxX, y: rect.maxY), NSPoint(x: rect.minX, y: rect.maxY)), // Top
+            (NSPoint(x: rect.minX, y: rect.maxY), NSPoint(x: rect.minX, y: rect.minY))  // Left
+        ]
+        
+        for (edgeStart, edgeEnd) in edges {
+            if lineSegmentsIntersect(p1: start, p2: end, p3: edgeStart, p4: edgeEnd) {
+                return true
+            }
+        }
+        
+        return false
+    }
+    
+    /// Check if two line segments intersect
+    private func lineSegmentsIntersect(p1: NSPoint, p2: NSPoint, p3: NSPoint, p4: NSPoint) -> Bool {
+        let d = (p2.x - p1.x) * (p4.y - p3.y) - (p2.y - p1.y) * (p4.x - p3.x)
+        if abs(d) < 0.001 { return false } // Parallel lines
+        
+        let t = ((p3.x - p1.x) * (p4.y - p3.y) - (p3.y - p1.y) * (p4.x - p3.x)) / d
+        let u = ((p3.x - p1.x) * (p2.y - p1.y) - (p3.y - p1.y) * (p2.x - p1.x)) / d
+        
+        return t >= 0 && t <= 1 && u >= 0 && u <= 1
+    }
+    
+    // MARK: - Hit Test Methods
+    
+    private func hitTestLine(_ line: Line, point: NSPoint) -> Bool {
+        let baseTolerance = line.lineWidth / 2.0
+        let minClickableTolerance: CGFloat = 5.0
+        let tolerance = max(baseTolerance, minClickableTolerance)
+        
+        return distanceFromPointToLineSegment(
+            point: point,
+            lineStart: line.startPoint,
+            lineEnd: line.endPoint
+        ) <= tolerance
+    }
+    
+    private func hitTestArrow(_ arrow: Arrow, point: NSPoint) -> Bool {
+        let baseTolerance = arrow.lineWidth / 2.0
+        let minClickableTolerance: CGFloat = 5.0
+        let tolerance = max(baseTolerance, minClickableTolerance)
+        
+        // Check the main line
+        let lineDistance = distanceFromPointToLineSegment(
+            point: point,
+            lineStart: arrow.startPoint,
+            lineEnd: arrow.endPoint
+        )
+        
+        if lineDistance <= tolerance {
+            return true
+        }
+        
+        // Also check if point is inside the arrowhead triangle
+        let sideLength: CGFloat = max(10.0, arrow.lineWidth * 4.0)
+        let dx = arrow.endPoint.x - arrow.startPoint.x
+        let dy = arrow.endPoint.y - arrow.startPoint.y
+        let angle = atan2(dy, dx)
+        let height = sideLength * sqrt(3.0) / 2.0
+        let halfBase = sideLength / 2.0
+        
+        let baseCenter = NSPoint(
+            x: arrow.endPoint.x - height * cos(angle),
+            y: arrow.endPoint.y - height * sin(angle)
+        )
+        
+        let perpAngle = angle + .pi / 2
+        let p1 = NSPoint(
+            x: baseCenter.x + halfBase * cos(perpAngle),
+            y: baseCenter.y + halfBase * sin(perpAngle)
+        )
+        let p2 = NSPoint(
+            x: baseCenter.x - halfBase * cos(perpAngle),
+            y: baseCenter.y - halfBase * sin(perpAngle)
+        )
+        
+        return isPointInTriangle(point: point, v1: arrow.endPoint, v2: p1, v3: p2)
+    }
+    
+    private func hitTestPath(_ path: DrawingPath, point: NSPoint) -> Bool {
+        guard path.points.count >= 2 else {
+            if path.points.count == 1 {
+                let baseTolerance = path.lineWidth / 2.0
+                let minClickableTolerance: CGFloat = 5.0
+                let tolerance = max(baseTolerance, minClickableTolerance)
+                
+                let dx = point.x - path.points[0].point.x
+                let dy = point.y - path.points[0].point.y
+                return sqrt(dx * dx + dy * dy) <= tolerance
+            }
+            return false
+        }
+        
+        let baseTolerance = path.lineWidth / 2.0
+        let minClickableTolerance: CGFloat = 5.0
+        let tolerance = max(baseTolerance, minClickableTolerance)
+        
+        for i in 0..<(path.points.count - 1) {
+            let distance = distanceFromPointToLineSegment(
+                point: point,
+                lineStart: path.points[i].point,
+                lineEnd: path.points[i + 1].point
+            )
+            if distance <= tolerance {
+                return true
+            }
+        }
+        return false
+    }
+    
+    private func hitTestHighlightPath(_ path: DrawingPath, point: NSPoint) -> Bool {
+        guard path.points.count >= 2 else {
+            if path.points.count == 1 {
+                let highlighterWidth = path.lineWidth * 4.67
+                let baseTolerance = highlighterWidth / 2.0
+                let minClickableTolerance: CGFloat = 5.0
+                let tolerance = max(baseTolerance, minClickableTolerance)
+                
+                let dx = point.x - path.points[0].point.x
+                let dy = point.y - path.points[0].point.y
+                return sqrt(dx * dx + dy * dy) <= tolerance
+            }
+            return false
+        }
+        
+        let highlighterWidth = path.lineWidth * 4.67
+        let baseTolerance = highlighterWidth / 2.0
+        let minClickableTolerance: CGFloat = 5.0
+        let tolerance = max(baseTolerance, minClickableTolerance)
+        
+        for i in 0..<(path.points.count - 1) {
+            let distance = distanceFromPointToLineSegment(
+                point: point,
+                lineStart: path.points[i].point,
+                lineEnd: path.points[i + 1].point
+            )
+            if distance <= tolerance {
+                return true
+            }
+        }
+        return false
+    }
+    
+    private func hitTestRectangle(_ rect: Rectangle, point: NSPoint) -> Bool {
+        let bounds = NSRect(
+            x: min(rect.startPoint.x, rect.endPoint.x),
+            y: min(rect.startPoint.y, rect.endPoint.y),
+            width: abs(rect.endPoint.x - rect.startPoint.x),
+            height: abs(rect.endPoint.y - rect.startPoint.y)
+        )
+        
+        // Only check edges (not inside)
+        let baseTolerance = rect.lineWidth / 2.0
+        let minClickableTolerance: CGFloat = 5.0
+        let edgeTolerance = max(baseTolerance, minClickableTolerance)
+        
+        // Expand and shrink to create edge zone
+        let outerBounds = bounds.insetBy(dx: -edgeTolerance, dy: -edgeTolerance)
+        let innerBounds = bounds.insetBy(dx: edgeTolerance, dy: edgeTolerance)
+        
+        // Point is on edge if it's in outer but not in inner
+        return outerBounds.contains(point) && !innerBounds.contains(point)
+    }
+    
+    private func hitTestCircle(_ circle: Circle, point: NSPoint) -> Bool {
+        let bounds = NSRect(
+            x: min(circle.startPoint.x, circle.endPoint.x),
+            y: min(circle.startPoint.y, circle.endPoint.y),
+            width: abs(circle.endPoint.x - circle.startPoint.x),
+            height: abs(circle.endPoint.y - circle.startPoint.y)
+        )
+        
+        let centerX = bounds.midX
+        let centerY = bounds.midY
+        let radiusX = bounds.width / 2
+        let radiusY = bounds.height / 2
+        
+        let dx = (point.x - centerX) / radiusX
+        let dy = (point.y - centerY) / radiusY
+        let normalizedDistance = sqrt(dx * dx + dy * dy)
+        
+        // Only check edge/perimeter (not inside)
+        let baseTolerance = circle.lineWidth / 2.0
+        let minClickableTolerance: CGFloat = 5.0
+        let edgeTolerance = max(baseTolerance, minClickableTolerance)
+        
+        let toleranceNormalized = edgeTolerance / min(radiusX, radiusY)
+        
+        // Point is on edge if distance is between (1.0 - tolerance) and (1.0 + tolerance)
+        let innerBoundary = max(0, 1.0 - toleranceNormalized)
+        let outerBoundary = 1.0 + toleranceNormalized
+        
+        return normalizedDistance >= innerBoundary && normalizedDistance <= outerBoundary
+    }
+    
+    private func hitTestText(_ text: TextAnnotation, point: NSPoint) -> Bool {
+        let textRect = getTextRect(for: text)
+        return textRect.contains(point)
+    }
+    
+    private func getTextRect(for annotation: TextAnnotation) -> NSRect {
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: annotation.fontSize)
+        ]
+        let size = annotation.text.size(withAttributes: attributes)
+        return NSRect(
+            x: annotation.position.x,
+            y: annotation.position.y,
+            width: size.width + 20,
+            height: size.height + 10
+        )
+    }
+    
+    private func hitTestCounter(_ counter: CounterAnnotation, point: NSPoint) -> Bool {
+        let radius: CGFloat = 15.0
+        let dx = point.x - counter.position.x
+        let dy = point.y - counter.position.y
+        let distance = sqrt(dx * dx + dy * dy)
+        return distance <= radius
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func isPointInTriangle(point: NSPoint, v1: NSPoint, v2: NSPoint, v3: NSPoint) -> Bool {
+        let denominator = ((v2.y - v3.y) * (v1.x - v3.x) + (v3.x - v2.x) * (v1.y - v3.y))
+        guard denominator != 0 else { return false }
+        
+        let a = ((v2.y - v3.y) * (point.x - v3.x) + (v3.x - v2.x) * (point.y - v3.y)) / denominator
+        let b = ((v3.y - v1.y) * (point.x - v3.x) + (v1.x - v3.x) * (point.y - v3.y)) / denominator
+        let c = 1 - a - b
+        
+        return a >= 0 && a <= 1 && b >= 0 && b <= 1 && c >= 0 && c <= 1
+    }
+    
+    private func distanceFromPointToLineSegment(point: NSPoint, lineStart: NSPoint, lineEnd: NSPoint) -> CGFloat {
+        let dx = lineEnd.x - lineStart.x
+        let dy = lineEnd.y - lineStart.y
+        let lengthSquared = dx * dx + dy * dy
+        
+        if lengthSquared == 0 {
+            let pdx = point.x - lineStart.x
+            let pdy = point.y - lineStart.y
+            return sqrt(pdx * pdx + pdy * pdy)
+        }
+        
+        var t = ((point.x - lineStart.x) * dx + (point.y - lineStart.y) * dy) / lengthSquared
+        t = max(0, min(1, t))
+        
+        let nearestX = lineStart.x + t * dx
+        let nearestY = lineStart.y + t * dy
+        
+        let pdx = point.x - nearestX
+        let pdy = point.y - nearestY
+        return sqrt(pdx * pdx + pdy * pdy)
+    }
+    
+    // MARK: - Object Movement
+    
+    func moveSelectedObjects(by delta: NSPoint) {
+        for selectedObj in selectedObjects {
+            moveObject(selectedObj, by: delta)
+        }
+    }
+    
+    private func moveObject(_ object: SelectedObject, by delta: NSPoint) {
+        switch object {
+        case .arrow(let index):
+            guard index < arrows.count else { return }
+            arrows[index].startPoint.x += delta.x
+            arrows[index].startPoint.y += delta.y
+            arrows[index].endPoint.x += delta.x
+            arrows[index].endPoint.y += delta.y
+            
+        case .line(let index):
+            guard index < lines.count else { return }
+            lines[index].startPoint.x += delta.x
+            lines[index].startPoint.y += delta.y
+            lines[index].endPoint.x += delta.x
+            lines[index].endPoint.y += delta.y
+            
+        case .rectangle(let index):
+            guard index < rectangles.count else { return }
+            rectangles[index].startPoint.x += delta.x
+            rectangles[index].startPoint.y += delta.y
+            rectangles[index].endPoint.x += delta.x
+            rectangles[index].endPoint.y += delta.y
+            
+        case .circle(let index):
+            guard index < circles.count else { return }
+            circles[index].startPoint.x += delta.x
+            circles[index].startPoint.y += delta.y
+            circles[index].endPoint.x += delta.x
+            circles[index].endPoint.y += delta.y
+            
+        case .path(let index):
+            guard index < paths.count else { return }
+            for i in 0..<paths[index].points.count {
+                paths[index].points[i].point.x += delta.x
+                paths[index].points[i].point.y += delta.y
+            }
+            
+        case .highlight(let index):
+            guard index < highlightPaths.count else { return }
+            for i in 0..<highlightPaths[index].points.count {
+                highlightPaths[index].points[i].point.x += delta.x
+                highlightPaths[index].points[i].point.y += delta.y
+            }
+            
+        case .text(let index):
+            guard index < textAnnotations.count else { return }
+            textAnnotations[index].position.x += delta.x
+            textAnnotations[index].position.y += delta.y
+            
+        case .counter(let index):
+            guard index < counterAnnotations.count else { return }
+            counterAnnotations[index].position.x += delta.x
+            counterAnnotations[index].position.y += delta.y
+            
+        case .none:
+            break
+        }
+    }
+    
+    func getObjectPosition(_ object: SelectedObject) -> Any? {
+        switch object {
+        case .arrow(let index):
+            guard index < arrows.count else { return nil }
+            return (arrows[index].startPoint, arrows[index].endPoint)
+        case .line(let index):
+            guard index < lines.count else { return nil }
+            return (lines[index].startPoint, lines[index].endPoint)
+        case .rectangle(let index):
+            guard index < rectangles.count else { return nil }
+            return (rectangles[index].startPoint, rectangles[index].endPoint)
+        case .circle(let index):
+            guard index < circles.count else { return nil }
+            return (circles[index].startPoint, circles[index].endPoint)
+        case .text(let index):
+            guard index < textAnnotations.count else { return nil }
+            return textAnnotations[index].position
+        case .counter(let index):
+            guard index < counterAnnotations.count else { return nil }
+            return counterAnnotations[index].position
+        case .path(let index):
+            guard index < paths.count else { return nil }
+            return paths[index].points.map { $0.point }
+        case .highlight(let index):
+            guard index < highlightPaths.count else { return nil }
+            return highlightPaths[index].points.map { $0.point }
+        case .none:
+            return nil
+        }
+    }
+    
+    func registerMoveUndo(object: SelectedObject, from oldPos: Any, to newPos: Any) {
+        switch object {
+        case .arrow(let index):
+            if let oldPositions = oldPos as? (NSPoint, NSPoint),
+               let newPositions = newPos as? (NSPoint, NSPoint) {
+                registerUndo(action: .moveArrow(index, oldPositions.0, oldPositions.1, newPositions.0, newPositions.1))
+            }
+        case .line(let index):
+            if let oldPositions = oldPos as? (NSPoint, NSPoint),
+               let newPositions = newPos as? (NSPoint, NSPoint) {
+                registerUndo(action: .moveLine(index, oldPositions.0, oldPositions.1, newPositions.0, newPositions.1))
+            }
+        case .rectangle(let index):
+            if let oldPositions = oldPos as? (NSPoint, NSPoint),
+               let newPositions = newPos as? (NSPoint, NSPoint) {
+                registerUndo(action: .moveRectangle(index, oldPositions.0, oldPositions.1, newPositions.0, newPositions.1))
+            }
+        case .circle(let index):
+            if let oldPositions = oldPos as? (NSPoint, NSPoint),
+               let newPositions = newPos as? (NSPoint, NSPoint) {
+                registerUndo(action: .moveCircle(index, oldPositions.0, oldPositions.1, newPositions.0, newPositions.1))
+            }
+        case .text(let index):
+            if let oldPosition = oldPos as? NSPoint,
+               let newPosition = newPos as? NSPoint {
+                registerUndo(action: .moveText(index, oldPosition, newPosition))
+            }
+        case .counter(let index):
+            if let oldPosition = oldPos as? NSPoint,
+               let newPosition = newPos as? NSPoint {
+                registerUndo(action: .moveCounter(index, oldPosition, newPosition))
+            }
+        case .path(let index):
+            if let oldPoints = oldPos as? [NSPoint],
+               let newPoints = newPos as? [NSPoint],
+               oldPoints.count == newPoints.count && oldPoints.count > 0 {
+                let delta = NSPoint(
+                    x: newPoints[0].x - oldPoints[0].x,
+                    y: newPoints[0].y - oldPoints[0].y
+                )
+                registerUndo(action: .movePath(index, delta))
+            }
+        case .highlight(let index):
+            if let oldPoints = oldPos as? [NSPoint],
+               let newPoints = newPos as? [NSPoint],
+               oldPoints.count == newPoints.count && oldPoints.count > 0 {
+                let delta = NSPoint(
+                    x: newPoints[0].x - oldPoints[0].x,
+                    y: newPoints[0].y - oldPoints[0].y
+                )
+                registerUndo(action: .moveHighlight(index, delta))
+            }
+        case .none:
+            break
+        }
+    }
+    
+    // MARK: - Selection Visual Feedback
+    
 }
