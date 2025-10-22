@@ -24,6 +24,13 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
   - ⭕ **Circle** shapes for highlighting areas.
   - 🔢 **Counter** tool for adding sequential numbered circles.
   - 📝 **Text** annotations with drag & edit support.
+  - 👆 **Select** tool for moving and managing objects.
+- 🎯 **Selection & Manipulation**:
+  - Select single or multiple objects
+  - Move objects by dragging
+  - Delete selected objects
+  - Rectangle selection to select multiple objects at once
+  - Shift+Click to add/remove objects from selection
 - ✨ **Fade/Persist Mode:** Control whether annotations fade out after a duration or persist on the screen.
 - 📌 **Always-On Mode:** Display annotations persistently without user interaction.
 - 🌈 **Color Picker:** Easily select and persist your preferred color.
@@ -99,34 +106,101 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 
 ### Keyboard Shortcuts
 
-| Action                      | Default Hotkey                                       | Description                                                     |
-| --------------------------- | ---------------------------------------------------- | --------------------------------------------------------------- |
-| **Toggle Overlay**          | Custom (Settings)                                    | Show or hide the annotation overlay.                            |
-| **Always-On Mode**          | Custom (Settings)                                    | Toggle always-on mode for persistent, non-interactive display.  |
-| **Close Overlay**           | <kbd>Command</kbd> + <kbd>W</kbd> or <kbd>Esc</kbd>  | Closes the annotation overlay.                                  |
-| **Interactive → Always-On** | <kbd>Shift</kbd> + <kbd>Esc</kbd>                    | Close interactive overlay and enable always-on mode.            |
-| **Open Color Picker**       | <kbd>c</kbd>                                         | Open the color selection menu for tools.                        |
-| **Open Line Width Picker**  | <kbd>w</kbd>                                         | Open the line width picker to adjust thickness.                 |
-| **Adjust Line Width**       | <kbd>Command</kbd> + <kbd>Scroll</kbd>               | Quickly adjust line width with scroll wheel.                    |
-| **Pen Mode**                | <kbd>p</kbd>                                         | Draw freehand lines.                                            |
-| **Arrow Mode**              | <kbd>a</kbd>                                         | Draw arrows.                                                    |
-| **Line Mode**               | <kbd>l</kbd>                                         | Draw straight lines.                                            |
-| **Highlighter Mode**        | <kbd>h</kbd>                                         | Highlight areas with a soft brush.                              |
-| **Rectangle Mode**          | <kbd>r</kbd>                                         | Draw rectangles (hold <kbd>Option</kbd> to expand from center). |
-| **Circle Mode**             | <kbd>o</kbd>                                         | Draw circles (hold <kbd>Option</kbd> to expand from center).    |
-| **Text Mode**               | <kbd>t</kbd>                                         | Add text annotations.                                           |
-| **Counter Mode**            | <kbd>n</kbd>                                         | Add sequential numbered circles.                                |
-| **Toggle Board**            | <kbd>b</kbd>                                         | Toggle whiteboard/blackboard.                                   |
-| **Finalize Text**           | <kbd>Enter</kbd> or <kbd>Esc</kbd>                   | Finalize text input (empty text removes it).                    |
-| **Toggle Fade Mode**        | <kbd>Space</kbd>                                     | Switch between fade and persist modes.                          |
-| **Delete Last**             | <kbd>Delete</kbd>                                    | Remove the most recent annotation.                              |
-| **Clear All**               | <kbd>Option</kbd> + <kbd>Delete</kbd>                | Remove all annotations from the overlay.                        |
-| **Undo**                    | <kbd>Command</kbd> + <kbd>Z</kbd>                    | Undo the last action.                                           |
-| **Redo**                    | <kbd>Command</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd> | Redo the last undone action.                                    |
-| **Constrain to Straight**   | <kbd>Shift</kbd> (while drawing)                     | Constrain lines/arrows to 45° angles; pen/highlighter to straight lines. |
-
 > [!TIP]
-> All tool shortcuts can be customized in Settings.
+> All shortcuts are **left-hand optimized** for efficient mouse + keyboard workflow! All tool shortcuts can be customized in Settings.
+
+#### 🎨 Drawing Tools (Top Row: Q-W-E-R-T)
+
+| Key | Tool | Memory Hint | Description |
+|-----|------|-------------|-------------|
+| <kbd>Q</kbd> | **Pen** | **Q**uick drawing | Freehand drawing (most used, top-left position) |
+| <kbd>W</kbd> | **Line** | **W**all or **W**ire | Draw straight lines |
+| <kbd>E</kbd> | **Highlighter** | **E**mphasize text | Highlight areas with semi-transparent brush |
+| <kbd>R</kbd> | **Rectangle** | **R**ectangle ✓ | Draw rectangles (hold <kbd>Option</kbd> for center) |
+| <kbd>T</kbd> | **Text** | **T**ext ✓ | Add text annotations |
+
+#### 🔧 Tools & Actions (Middle Row: A-S-D)
+
+| Key | Tool | Memory Hint | Description |
+|-----|------|-------------|-------------|
+| <kbd>A</kbd> | **Arrow** | **A**rrow ✓ | Draw directional arrows |
+| <kbd>S</kbd> | **Line Width** | **S**troke / **S**ize | Open line width picker |
+| <kbd>D</kbd> | **Counter** | **D**igit / **D**ot | Add sequential numbered circles (1, 2, 3...) |
+
+#### 🎯 Selection & Pickers (Bottom Row: X-C-V-B)
+
+| Key | Tool | Memory Hint | Description |
+|-----|------|-------------|-------------|
+| <kbd>X</kbd> | **Color Picker** | Mi**X** colors | Open color selection menu |
+| <kbd>C</kbd> | **Circle** | **C**ircle ✓ | Draw circles (hold <kbd>Option</kbd> for center) |
+| <kbd>V</kbd> | **Select** | **V**isual mode | Select, move, and manage objects |
+| <kbd>B</kbd> | **Board** | **B**oard ✓ | Toggle whiteboard/blackboard |
+
+#### ⚡ Quick Actions
+
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| <kbd>Space</kbd> | **Toggle Fade Mode** | Switch between fade and persist modes |
+| <kbd>Delete</kbd> | **Delete** | Remove selected objects or most recent annotation |
+| <kbd>Option</kbd> + <kbd>Delete</kbd> | **Clear All** | Remove all annotations |
+| <kbd>Command</kbd> + <kbd>Z</kbd> | **Undo** | Undo the last action |
+| <kbd>Command</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd> | **Redo** | Redo the last undone action |
+| <kbd>Command</kbd> + <kbd>Scroll</kbd> | **Adjust Width** | Quickly change line width |
+| <kbd>Shift</kbd> (while drawing) | **Constrain** | Lines: 45° angles; Pen/Highlighter: straight |
+
+#### 🪟 Overlay Controls
+
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| Custom (Settings) | **Toggle Overlay** | Show or hide the annotation overlay |
+| Custom (Settings) | **Always-On Mode** | Persistent, non-interactive display |
+| <kbd>Esc</kbd> or <kbd>Command</kbd> + <kbd>W</kbd> | **Close** | Closes the annotation overlay |
+| <kbd>Shift</kbd> + <kbd>Esc</kbd> | **Switch Mode** | Close interactive → enable always-on |
+| <kbd>Enter</kbd> or <kbd>Esc</kbd> (in text) | **Finalize Text** | Complete text input |
+
+#### 🎹 Visual Keyboard Layout
+
+All shortcuts are **left-hand optimized** for efficient mouse + keyboard workflow:
+
+```
+Left-Hand QWERTY Layout:
+┌─────┬─────┬─────┬─────┬─────┐
+│     │     │     │     │     │
+├─────┼─────┼─────┼─────┼─────┤  ← Top Row: Drawing Tools
+│  Q  │  W  │  E  │  R  │  T  │    (most frequently used)
+│ Pen │Line │High │Rect │Text │
+├─────┼─────┼─────┼─────┼─────┤  ← Middle Row: Tools & Actions
+│  A  │  S  │  D  │     │     │    (frequently used)
+│Arrow│Width│Cntr │     │     │
+├─────┼─────┼─────┼─────┼─────┤  ← Bottom Row: Selection & Pickers
+│     │  X  │  C  │  V  │  B  │    (utility tools)
+│     │Color│Circ │Slct │Brd  │
+└─────┴─────┴─────┴─────┴─────┘
+
+Legend:
+  High = Highlighter    Slct = Select
+  Rect = Rectangle      Cntr = Counter
+  Circ = Circle         Brd = Board
+  Width = Line Width
+```
+
+**💡 Memory Techniques:**
+
+1. **First Letter Match** (easy to remember): **A**rrow, **R**ectangle, **C**ircle, **T**ext, **B**oard
+2. **Top Row** = Most used drawing tools (Q/W/E/R/T like typing start)
+3. **Q = Quick** = Pen (most used tool in top-left corner, easiest to reach)
+4. **Middle Row** = Secondary actions and adjustments
+5. **Bottom Row** = Pickers and special tools
+6. **Mnemonics**:
+   - **W** = **W**all/**W**ire (straight lines)
+   - **E** = **E**mphasize (highlighter)
+   - **S** = **S**troke/**S**ize (line width)
+   - **D** = **D**igit/**D**ot (counter)
+   - **X** = Mi**X** (color picker)
+   - **V** = **V**isual mode (like Vim's visual mode for selection)
+
+> [!NOTE]
+> This layout follows the natural hand position on QWERTY keyboards, minimizing hand movement while keeping your right hand on the mouse!
 
 ### Drawing Tools
 
@@ -141,7 +215,7 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 
 Annotate provides flexible line width control:
 
-- **Interactive Picker**: Press <kbd>w</kbd> or select "Line Width" from the menu bar to open a picker with:
+- **Interactive Picker**: Press <kbd>s</kbd> or select "Line Width" from the menu bar to open a picker with:
   - Visual line preview showing the current thickness
   - Slider for precise width adjustment (0.5px to 20px)
   - Real-time feedback as you adjust
@@ -177,6 +251,34 @@ Annotate provides flexible line width control:
 
 - Click anywhere to add sequential numbered circles (1, 2, 3...)
 - Numbers increment automatically with each click
+
+#### Select Tool
+
+The Select tool allows you to manipulate existing annotations with precision:
+
+- **Select Objects**: Press <kbd>v</kbd> to enter select mode
+  - Click on objects to select them (lines, arrows, shapes, text, etc.)
+  - Circles and rectangles must be clicked on their edges
+  - A blue dashed bounding box appears around selected objects
+  
+- **Multiple Selection**:
+  - **Rectangle Selection**: Click and drag on empty space to draw a selection rectangle
+    - All objects inside or touching the rectangle are selected
+  - **Shift+Click**: Hold <kbd>Shift</kbd> and click objects to add/remove them from selection
+  - **Shift+Rectangle**: Hold <kbd>Shift</kbd> while drawing a rectangle to add to existing selection
+  
+- **Move Objects**:
+  - Click anywhere inside the blue bounding box and drag to move selected objects
+  - Multiple selected objects move together, maintaining their relative positions
+  
+- **Delete Selected**:
+  - Press <kbd>Delete</kbd> to remove all selected objects
+  - Use <kbd>Command</kbd> + <kbd>Z</kbd> to undo deletions
+  
+- **Clear Selection**: Click on empty space (without <kbd>Shift</kbd>) to deselect all objects
+
+> [!TIP]
+> The select tool makes it easy to correct mistakes, reposition elements, and build complex diagrams by moving groups of objects together.
 
 ### Drawing Modes
 
