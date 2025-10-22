@@ -1,18 +1,36 @@
 import Foundation
 
+// MARK: - Keyboard Shortcuts
+//
+// All shortcuts are designed for LEFT-HAND operation (right hand stays on mouse)
+//
+// Layout on QWERTY keyboard:
+//   Q W E R T     Q=Pen(Quick), W=Line(Wall), E=Highlighter(Emphasize), R=Rectangle, T=Text
+//   A S D F G     A=Arrow, S=LineWidth(Stroke/Size), D=Counter(Digit)
+//   Z X C V B     X=ColorPicker(miX), C=Circle, V=Select, B=Board
+//
+// Mnemonic tips:
+//   - Q: Quick drawing (Pen) - top-left corner, most accessible
+//   - W: Wall/Wire (Line) - straight lines
+//   - E: Emphasize (Highlighter) - make text stand out
+//   - S: Stroke/Size (Line Width) - adjust thickness
+//   - D: Digit/Dot (Counter) - numbered circles
+//   - X: miX colors (Color Picker)
+//   - All other keys match first letter of tool name
+
 enum ShortcutKey: String, CaseIterable {
-    case pen = "p"
-    case arrow = "a"
-    case line = "l"
-    case highlighter = "h"
-    case rectangle = "r"
-    case circle = "o"
-    case counter = "n"
-    case text = "t"
-    case select = "v"
-    case colorPicker = "c"
-    case lineWidthPicker = "w"
-    case toggleBoard = "b"
+    case pen = "q"              // Q - Quick drawing (top-left, most accessible)
+    case arrow = "a"            // A - Arrow
+    case line = "w"             // W - Wall/Wire (straight line)
+    case highlighter = "e"      // E - Emphasize
+    case rectangle = "r"        // R - Rectangle
+    case circle = "c"           // C - Circle
+    case counter = "d"          // D - Digit/Dot counter
+    case text = "t"             // T - Text
+    case select = "v"           // V - Select (standard across apps)
+    case colorPicker = "x"      // X - miX colors
+    case lineWidthPicker = "s"  // S - Stroke/Size width
+    case toggleBoard = "b"      // B - Board
 
     var defaultKey: String { rawValue }
 
