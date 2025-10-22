@@ -525,7 +525,7 @@ class OverlayView: NSView, NSTextFieldDelegate {
     
     // MARK: - Selection Bounding Box
     
-    private func calculateSelectionBoundingBox() -> NSRect {
+    func calculateSelectionBoundingBox() -> NSRect {
         guard !selectedObjects.isEmpty else { return .zero }
         
         var minX = CGFloat.greatestFiniteMagnitude
@@ -551,7 +551,7 @@ class OverlayView: NSView, NSTextFieldDelegate {
         )
     }
     
-    private func getObjectBounds(_ object: SelectedObject) -> NSRect {
+    func getObjectBounds(_ object: SelectedObject) -> NSRect {
         switch object {
         case .arrow(let index):
             guard index < arrows.count else { return .zero }
