@@ -517,8 +517,8 @@ class OverlayView: NSView, NSTextFieldDelegate {
             )
             
             let path = NSBezierPath(rect: rect)
-            path.lineWidth = 1.0
-            path.setLineDash([4.0, 2.0], count: 2, phase: 0)
+            path.lineWidth = 2.0
+            path.setLineDash([5.0, 3.0], count: 2, phase: 0)
             NSColor.systemBlue.withAlphaComponent(0.3).setFill()
             NSColor.systemBlue.setStroke()
             path.fill()
