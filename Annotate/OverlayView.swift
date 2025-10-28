@@ -929,6 +929,12 @@ class OverlayView: NSView, NSTextFieldDelegate {
             currentRectangle = nil
             currentCircle = nil
             currentTextAnnotation = nil
+            
+            // Clear selection state
+            selectedObjects.removeAll()
+            selectionRectStart = nil
+            selectionRectEnd = nil
+            
             needsDisplay = true
         }
     }

@@ -54,7 +54,7 @@ final class ShortcutManagerTests: XCTestCase, Sendable {
     }
 
     func testIsShortcutTaken() {
-        // With defaults in place, Arrow is "a" and Pen is "q".
+        // With defaults in place, Arrow is "a" and Pen is "p".
         XCTAssertTrue(
             ShortcutManager.shared.isShortcutTaken("a", excluding: .pen),
             "The shortcut 'a' is taken by Arrow")
@@ -67,7 +67,7 @@ final class ShortcutManagerTests: XCTestCase, Sendable {
         XCTAssertEqual(
             ShortcutManager.shared.getShortcut(for: .counter),
             ShortcutKey.counter.defaultKey,
-            "Default shortcut for Counter should be 'd'"
+            "Default shortcut for Counter should be 'n'"
         )
 
         // Set a custom shortcut
@@ -91,7 +91,7 @@ final class ShortcutManagerTests: XCTestCase, Sendable {
         XCTAssertEqual(
             ShortcutManager.shared.getShortcut(for: .line),
             ShortcutKey.line.defaultKey,
-            "Default shortcut for Line should be 'w'"
+            "Default shortcut for Line should be 'l'"
         )
         
         // Set a custom shortcut for line
@@ -111,35 +111,21 @@ final class ShortcutManagerTests: XCTestCase, Sendable {
         )
     }
     
-    // MARK: - Left-Hand Keyboard Layout Tests
+    // MARK: - Default Shortcut Tests
     
-    func testLeftHandKeyboardLayout() {
-        // Test that all shortcuts are on the left-hand side of QWERTY keyboard
-        // Left-hand keys: Q W E R T A S D F G Z X C V B (and numbers)
-        let leftHandKeys = Set(["q", "w", "e", "r", "t", "a", "s", "d", "f", "g", "z", "x", "c", "v", "b", "1", "2", "3", "4", "5"])
-        
-        for tool in ShortcutKey.allCases {
-            let shortcut = tool.defaultKey
-            XCTAssertTrue(
-                leftHandKeys.contains(shortcut),
-                "\(tool.displayName) shortcut '\(shortcut)' should be on the left-hand side of keyboard"
-            )
-        }
-    }
-    
-    func testAllNewDefaultShortcuts() {
-        // Test all new left-hand keyboard shortcuts
-        XCTAssertEqual(ShortcutKey.pen.defaultKey, "q", "Pen should be 'q' (Quick drawing)")
+    func testAllDefaultShortcuts() {
+        // Test all default keyboard shortcuts
+        XCTAssertEqual(ShortcutKey.pen.defaultKey, "p", "Pen should be 'p'")
         XCTAssertEqual(ShortcutKey.arrow.defaultKey, "a", "Arrow should be 'a'")
-        XCTAssertEqual(ShortcutKey.line.defaultKey, "w", "Line should be 'w' (Wall/Wire)")
-        XCTAssertEqual(ShortcutKey.highlighter.defaultKey, "e", "Highlighter should be 'e' (Emphasize)")
+        XCTAssertEqual(ShortcutKey.line.defaultKey, "l", "Line should be 'l'")
+        XCTAssertEqual(ShortcutKey.highlighter.defaultKey, "h", "Highlighter should be 'h'")
         XCTAssertEqual(ShortcutKey.rectangle.defaultKey, "r", "Rectangle should be 'r'")
-        XCTAssertEqual(ShortcutKey.circle.defaultKey, "c", "Circle should be 'c'")
-        XCTAssertEqual(ShortcutKey.counter.defaultKey, "d", "Counter should be 'd' (Digit)")
+        XCTAssertEqual(ShortcutKey.circle.defaultKey, "o", "Circle should be 'o'")
+        XCTAssertEqual(ShortcutKey.counter.defaultKey, "n", "Counter should be 'n'")
         XCTAssertEqual(ShortcutKey.text.defaultKey, "t", "Text should be 't'")
         XCTAssertEqual(ShortcutKey.select.defaultKey, "v", "Select should be 'v'")
-        XCTAssertEqual(ShortcutKey.colorPicker.defaultKey, "x", "Color Picker should be 'x' (miX)")
-        XCTAssertEqual(ShortcutKey.lineWidthPicker.defaultKey, "s", "Line Width should be 's' (Stroke/Size)")
+        XCTAssertEqual(ShortcutKey.colorPicker.defaultKey, "c", "Color Picker should be 'c'")
+        XCTAssertEqual(ShortcutKey.lineWidthPicker.defaultKey, "w", "Line Width should be 'w'")
         XCTAssertEqual(ShortcutKey.toggleBoard.defaultKey, "b", "Board should be 'b'")
     }
     
@@ -159,22 +145,16 @@ final class ShortcutManagerTests: XCTestCase, Sendable {
         XCTAssertEqual(shortcuts.count, ShortcutKey.allCases.count, "All shortcuts should be unique")
     }
     
-    func testMnemonicShortcuts() {
-        // Test that mnemonic shortcuts match expected keys
-        // First-letter matches
+    func testFirstLetterShortcuts() {
+        // Test that shortcuts generally match the first letter of the tool
+        XCTAssertEqual(ShortcutKey.pen.defaultKey, "p", "Pen starts with 'p'")
         XCTAssertEqual(ShortcutKey.arrow.defaultKey, "a", "Arrow starts with 'a'")
+        XCTAssertEqual(ShortcutKey.line.defaultKey, "l", "Line starts with 'l'")
+        XCTAssertEqual(ShortcutKey.highlighter.defaultKey, "h", "Highlighter starts with 'h'")
         XCTAssertEqual(ShortcutKey.rectangle.defaultKey, "r", "Rectangle starts with 'r'")
-        XCTAssertEqual(ShortcutKey.circle.defaultKey, "c", "Circle starts with 'c'")
+        XCTAssertEqual(ShortcutKey.counter.defaultKey, "n", "Counter uses 'n' (Number)")
         XCTAssertEqual(ShortcutKey.text.defaultKey, "t", "Text starts with 't'")
         XCTAssertEqual(ShortcutKey.toggleBoard.defaultKey, "b", "Board starts with 'b'")
-        
-        // Mnemonic associations
-        XCTAssertEqual(ShortcutKey.pen.defaultKey, "q", "Q for Quick drawing (Pen)")
-        XCTAssertEqual(ShortcutKey.line.defaultKey, "w", "W for Wall/Wire (Line)")
-        XCTAssertEqual(ShortcutKey.highlighter.defaultKey, "e", "E for Emphasize (Highlighter)")
-        XCTAssertEqual(ShortcutKey.lineWidthPicker.defaultKey, "s", "S for Stroke/Size (Line Width)")
-        XCTAssertEqual(ShortcutKey.counter.defaultKey, "d", "D for Digit (Counter)")
-        XCTAssertEqual(ShortcutKey.colorPicker.defaultKey, "x", "X for miX (Color Picker)")
     }
     
     func testShortcutCustomization() {
@@ -196,8 +176,8 @@ final class ShortcutManagerTests: XCTestCase, Sendable {
         
         // Reset and verify defaults are restored
         ShortcutManager.shared.resetAllToDefault()
-        XCTAssertEqual(ShortcutManager.shared.getShortcut(for: .pen), "q")
-        XCTAssertEqual(ShortcutManager.shared.getShortcut(for: .line), "w")
-        XCTAssertEqual(ShortcutManager.shared.getShortcut(for: .highlighter), "e")
+        XCTAssertEqual(ShortcutManager.shared.getShortcut(for: .pen), "p")
+        XCTAssertEqual(ShortcutManager.shared.getShortcut(for: .line), "l")
+        XCTAssertEqual(ShortcutManager.shared.getShortcut(for: .highlighter), "h")
     }
 }

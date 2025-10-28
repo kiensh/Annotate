@@ -107,34 +107,29 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 ### Keyboard Shortcuts
 
 > [!TIP]
-> All shortcuts are **left-hand optimized** for efficient mouse + keyboard workflow! All tool shortcuts can be customized in Settings.
+> All tool shortcuts can be customized in Settings.
 
-#### 🎨 Drawing Tools (Top Row: Q-W-E-R-T)
+#### 🎨 Drawing Tools
 
-| Key | Tool | Memory Hint | Description |
-|-----|------|-------------|-------------|
-| <kbd>Q</kbd> | **Pen** | **Q**uick drawing | Freehand drawing (most used, top-left position) |
-| <kbd>W</kbd> | **Line** | **W**all or **W**ire | Draw straight lines |
-| <kbd>E</kbd> | **Highlighter** | **E**mphasize text | Highlight areas with semi-transparent brush |
-| <kbd>R</kbd> | **Rectangle** | **R**ectangle ✓ | Draw rectangles (hold <kbd>Option</kbd> for center) |
-| <kbd>T</kbd> | **Text** | **T**ext ✓ | Add text annotations |
+| Key | Tool | Description |
+|-----|------|-------------|
+| <kbd>P</kbd> | **Pen** | Freehand drawing |
+| <kbd>L</kbd> | **Line** | Draw straight lines |
+| <kbd>H</kbd> | **Highlighter** | Highlight areas with semi-transparent brush |
+| <kbd>R</kbd> | **Rectangle** | Draw rectangles (hold <kbd>Option</kbd> for center) |
+| <kbd>O</kbd> | **Circle** | Draw circles (hold <kbd>Option</kbd> for center) |
+| <kbd>A</kbd> | **Arrow** | Draw directional arrows |
+| <kbd>N</kbd> | **Counter** | Add sequential numbered circles (1, 2, 3...) |
+| <kbd>T</kbd> | **Text** | Add text annotations |
 
-#### 🔧 Tools & Actions (Middle Row: A-S-D)
+#### 🎯 Tool Settings & Selection
 
-| Key | Tool | Memory Hint | Description |
-|-----|------|-------------|-------------|
-| <kbd>A</kbd> | **Arrow** | **A**rrow ✓ | Draw directional arrows |
-| <kbd>S</kbd> | **Line Width** | **S**troke / **S**ize | Open line width picker |
-| <kbd>D</kbd> | **Counter** | **D**igit / **D**ot | Add sequential numbered circles (1, 2, 3...) |
-
-#### 🎯 Selection & Pickers (Bottom Row: X-C-V-B)
-
-| Key | Tool | Memory Hint | Description |
-|-----|------|-------------|-------------|
-| <kbd>X</kbd> | **Color Picker** | Mi**X** colors | Open color selection menu |
-| <kbd>C</kbd> | **Circle** | **C**ircle ✓ | Draw circles (hold <kbd>Option</kbd> for center) |
-| <kbd>V</kbd> | **Select** | **V**isual mode | Select, move, and manage objects |
-| <kbd>B</kbd> | **Board** | **B**oard ✓ | Toggle whiteboard/blackboard |
+| Key | Tool | Description |
+|-----|------|-------------|
+| <kbd>C</kbd> | **Color Picker** | Open color selection menu |
+| <kbd>W</kbd> | **Line Width** | Open line width picker |
+| <kbd>V</kbd> | **Select (Visual Mode)** | Select, move, and manage objects |
+| <kbd>B</kbd> | **Board** | Toggle whiteboard/blackboard |
 
 #### ⚡ Quick Actions
 
@@ -159,50 +154,6 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 | <kbd>Esc</kbd> or <kbd>Command</kbd> + <kbd>W</kbd> | **Close** | Closes the annotation overlay |
 | <kbd>Shift</kbd> + <kbd>Esc</kbd> | **Switch Mode** | Close interactive → enable always-on |
 | <kbd>Enter</kbd> or <kbd>Esc</kbd> (in text) | **Finalize Text** | Complete text input |
-
-#### 🎹 Visual Keyboard Layout
-
-All shortcuts are **left-hand optimized** for efficient mouse + keyboard workflow:
-
-```
-Left-Hand QWERTY Layout:
-┌─────┬─────┬─────┬─────┬─────┐
-│     │     │     │     │     │
-├─────┼─────┼─────┼─────┼─────┤  ← Top Row: Drawing Tools
-│  Q  │  W  │  E  │  R  │  T  │    (most frequently used)
-│ Pen │Line │High │Rect │Text │
-├─────┼─────┼─────┼─────┼─────┤  ← Middle Row: Tools & Actions
-│  A  │  S  │  D  │     │     │    (frequently used)
-│Arrow│Width│Cntr │     │     │
-├─────┼─────┼─────┼─────┼─────┤  ← Bottom Row: Selection & Pickers
-│     │  X  │  C  │  V  │  B  │    (utility tools)
-│     │Color│Circ │Slct │Brd  │
-└─────┴─────┴─────┴─────┴─────┘
-
-Legend:
-  High = Highlighter    Slct = Select
-  Rect = Rectangle      Cntr = Counter
-  Circ = Circle         Brd = Board
-  Width = Line Width
-```
-
-**💡 Memory Techniques:**
-
-1. **First Letter Match** (easy to remember): **A**rrow, **R**ectangle, **C**ircle, **T**ext, **B**oard
-2. **Top Row** = Most used drawing tools (Q/W/E/R/T like typing start)
-3. **Q = Quick** = Pen (most used tool in top-left corner, easiest to reach)
-4. **Middle Row** = Secondary actions and adjustments
-5. **Bottom Row** = Pickers and special tools
-6. **Mnemonics**:
-   - **W** = **W**all/**W**ire (straight lines)
-   - **E** = **E**mphasize (highlighter)
-   - **S** = **S**troke/**S**ize (line width)
-   - **D** = **D**igit/**D**ot (counter)
-   - **X** = Mi**X** (color picker)
-   - **V** = **V**isual mode (like Vim's visual mode for selection)
-
-> [!NOTE]
-> This layout follows the natural hand position on QWERTY keyboards, minimizing hand movement while keeping your right hand on the mouse!
 
 ### Drawing Tools
 
