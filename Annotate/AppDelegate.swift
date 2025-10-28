@@ -814,6 +814,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
                 item.keyEquivalent = ShortcutManager.shared.getShortcut(for: .circle)
             case "Text":
                 item.keyEquivalent = ShortcutManager.shared.getShortcut(for: .text)
+            case "Select":
+                item.keyEquivalent = ShortcutManager.shared.getShortcut(for: .select)
             case "Color":
                 item.keyEquivalent = ShortcutManager.shared.getShortcut(for: .colorPicker)
             case "Line Width":
