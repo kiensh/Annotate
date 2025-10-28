@@ -462,6 +462,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
         }
         
         overlayWindows.values.forEach { window in
+            // Clear selection when switching away from select mode
+            if window.overlayView.currentTool == .select && tool != .select {
+                window.overlayView.selectedObjects.removeAll()
+                window.overlayView.needsDisplay = true
+            }
             window.overlayView.currentTool = tool
             window.showToolFeedback(tool)
         }
