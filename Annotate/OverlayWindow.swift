@@ -638,6 +638,12 @@ class OverlayWindow: NSWindow {
             } else {
                 overlayView.deleteLastItem()
             }
+        case 117:  // Forward Delete key (fn+delete)
+            if event.modifierFlags.contains(.option) {
+                overlayView.clearAll()
+            } else {
+                overlayView.deleteLastItem()
+            }
         case 49:  // Spacebar - toggle drawing mode
             AppDelegate.shared?.toggleFadeMode(NSMenuItem())
         case 13:  // 'w' key
