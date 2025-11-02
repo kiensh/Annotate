@@ -499,4 +499,202 @@ final class SelectionFeatureTests: XCTestCase, Sendable {
         let found = overlayView.findObjectsInRect(rect)
         XCTAssertTrue(found.isEmpty)
     }
+    
+    // MARK: - Select All Tests
+    
+    func testSelectAllInSelectMode() {
+        // Add various objects
+        overlayView.arrows.append(Arrow(
+            startPoint: NSPoint(x: 10, y: 10),
+            endPoint: NSPoint(x: 50, y: 50),
+            color: .red,
+            lineWidth: 2.0,
+            creationTime: nil
+        ))
+        
+        overlayView.lines.append(Line(
+            startPoint: NSPoint(x: 100, y: 100),
+            endPoint: NSPoint(x: 200, y: 200),
+            color: .blue,
+            lineWidth: 2.0,
+            creationTime: nil
+        ))
+        
+        overlayView.rectangles.append(Rectangle(
+            startPoint: NSPoint(x: 300, y: 300),
+            endPoint: NSPoint(x: 400, y: 400),
+            color: .green,
+            lineWidth: 2.0,
+            creationTime: nil
+        ))
+        
+        overlayView.circles.append(Circle(
+            startPoint: NSPoint(x: 500, y: 500),
+            endPoint: NSPoint(x: 600, y: 600),
+            color: .yellow,
+            lineWidth: 2.0,
+            creationTime: nil
+        ))
+        
+        overlayView.textAnnotations.append(TextAnnotation(
+            text: "Test",
+            position: NSPoint(x: 700, y: 700),
+            color: .black,
+            fontSize: 18
+        ))
+        
+        // Switch to select mode
+        overlayView.currentTool = .select
+        
+        // Call selectAllObjects
+        overlayView.selectAllObjects()
+        
+        // Should have selected all 5 objects
+        XCTAssertEqual(overlayView.selectedObjects.count, 5)
+        XCTAssertTrue(overlayView.selectedObjects.contains(.arrow(index: 0)))
+        XCTAssertTrue(overlayView.selectedObjects.contains(.line(index: 0)))
+        XCTAssertTrue(overlayView.selectedObjects.contains(.rectangle(index: 0)))
+        XCTAssertTrue(overlayView.selectedObjects.contains(.circle(index: 0)))
+        XCTAssertTrue(overlayView.selectedObjects.contains(.text(index: 0)))
+    }
+    
+    func testSelectAllNotInSelectMode() {
+        // Add some objects
+        overlayView.lines.append(Line(
+            startPoint: NSPoint(x: 100, y: 100),
+            endPoint: NSPoint(x: 200, y: 200),
+            color: .red,
+            lineWidth: 2.0,
+            creationTime: nil
+        ))
+        
+        // In pen mode, not select mode
+        overlayView.currentTool = .pen
+        
+        // Call selectAllObjects
+        overlayView.selectAllObjects()
+        
+        // Should not select anything when not in select mode
+        XCTAssertTrue(overlayView.selectedObjects.isEmpty)
+    }
+    
+    func testSelectAllEmptyCanvas() {
+        overlayView.currentTool = .select
+        
+        // Call selectAllObjects on empty canvas
+        overlayView.selectAllObjects()
+        
+        // Should remain empty
+        XCTAssertTrue(overlayView.selectedObjects.isEmpty)
+    }
+    
+    func testSelectAllClearsPreviousSelection() {
+        // Add objects
+        overlayView.lines.append(Line(
+            startPoint: NSPoint(x: 100, y: 100),
+            endPoint: NSPoint(x: 200, y: 200),
+            color: .red,
+            lineWidth: 2.0,
+            creationTime: nil
+        ))
+        
+        overlayView.arrows.append(Arrow(
+            startPoint: NSPoint(x: 10, y: 10),
+            endPoint: NSPoint(x: 50, y: 50),
+            color: .blue,
+            lineWidth: 2.0,
+            creationTime: nil
+        ))
+        
+        overlayView.currentTool = .select
+        
+        // Select just one object
+        overlayView.selectedObjects = [.line(index: 0)]
+        XCTAssertEqual(overlayView.selectedObjects.count, 1)
+        
+        // Call selectAllObjects
+        overlayView.selectAllObjects()
+        
+        // Should now have all objects selected
+        XCTAssertEqual(overlayView.selectedObjects.count, 2)
+        XCTAssertTrue(overlayView.selectedObjects.contains(.line(index: 0)))
+        XCTAssertTrue(overlayView.selectedObjects.contains(.arrow(index: 0)))
+    }
+    
+    func testSelectAllWithAllObjectTypes() {
+        overlayView.currentTool = .select
+        
+        // Add one of each type
+        overlayView.paths.append(DrawingPath(
+            points: [TimedPoint(point: NSPoint(x: 0, y: 0), timestamp: 0)],
+            color: .red,
+            lineWidth: 2.0
+        ))
+        
+        overlayView.arrows.append(Arrow(
+            startPoint: NSPoint(x: 10, y: 10),
+            endPoint: NSPoint(x: 50, y: 50),
+            color: .red,
+            lineWidth: 2.0,
+            creationTime: nil
+        ))
+        
+        overlayView.lines.append(Line(
+            startPoint: NSPoint(x: 100, y: 100),
+            endPoint: NSPoint(x: 200, y: 200),
+            color: .blue,
+            lineWidth: 2.0,
+            creationTime: nil
+        ))
+        
+        overlayView.highlightPaths.append(DrawingPath(
+            points: [TimedPoint(point: NSPoint(x: 150, y: 150), timestamp: 0)],
+            color: .yellow,
+            lineWidth: 20.0
+        ))
+        
+        overlayView.rectangles.append(Rectangle(
+            startPoint: NSPoint(x: 300, y: 300),
+            endPoint: NSPoint(x: 400, y: 400),
+            color: .green,
+            lineWidth: 2.0,
+            creationTime: nil
+        ))
+        
+        overlayView.circles.append(Circle(
+            startPoint: NSPoint(x: 500, y: 500),
+            endPoint: NSPoint(x: 600, y: 600),
+            color: .yellow,
+            lineWidth: 2.0,
+            creationTime: nil
+        ))
+        
+        overlayView.textAnnotations.append(TextAnnotation(
+            text: "Test",
+            position: NSPoint(x: 700, y: 700),
+            color: .black,
+            fontSize: 18
+        ))
+        
+        overlayView.counterAnnotations.append(CounterAnnotation(
+            number: 1,
+            position: NSPoint(x: 800, y: 800),
+            color: .red,
+            creationTime: nil
+        ))
+        
+        // Call selectAllObjects
+        overlayView.selectAllObjects()
+        
+        // Should select all 8 objects (one of each type)
+        XCTAssertEqual(overlayView.selectedObjects.count, 8)
+        XCTAssertTrue(overlayView.selectedObjects.contains(.path(index: 0)))
+        XCTAssertTrue(overlayView.selectedObjects.contains(.arrow(index: 0)))
+        XCTAssertTrue(overlayView.selectedObjects.contains(.line(index: 0)))
+        XCTAssertTrue(overlayView.selectedObjects.contains(.highlight(index: 0)))
+        XCTAssertTrue(overlayView.selectedObjects.contains(.rectangle(index: 0)))
+        XCTAssertTrue(overlayView.selectedObjects.contains(.circle(index: 0)))
+        XCTAssertTrue(overlayView.selectedObjects.contains(.text(index: 0)))
+        XCTAssertTrue(overlayView.selectedObjects.contains(.counter(index: 0)))
+    }
 }
