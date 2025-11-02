@@ -119,6 +119,8 @@ enum DrawingAction {
     case clearAll(
         [DrawingPath], [Arrow], [Line], [DrawingPath], [Rectangle], [Circle], [TextAnnotation],
         [CounterAnnotation])
+    case pasteObjects([SelectedObject])  // For undo: remove pasted objects
+    case cutObjects([SelectedObject])  // For undo: restore cut objects
 }
 
 // Add to Models.swift

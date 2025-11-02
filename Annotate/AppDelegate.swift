@@ -246,6 +246,32 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
                 action: #selector(redo),
                 keyEquivalent: "Z")
             menu.addItem(redoItem)
+            
+            menu.addItem(NSMenuItem.separator())
+            
+            let copyItem = NSMenuItem(
+                title: "Copy",
+                action: #selector(copySelected),
+                keyEquivalent: "c")
+            menu.addItem(copyItem)
+            
+            let cutItem = NSMenuItem(
+                title: "Cut",
+                action: #selector(cutSelected),
+                keyEquivalent: "x")
+            menu.addItem(cutItem)
+            
+            let pasteItem = NSMenuItem(
+                title: "Paste",
+                action: #selector(pasteSelected),
+                keyEquivalent: "v")
+            menu.addItem(pasteItem)
+            
+            let duplicateItem = NSMenuItem(
+                title: "Duplicate",
+                action: #selector(duplicateSelected),
+                keyEquivalent: "d")
+            menu.addItem(duplicateItem)
 
             menu.addItem(NSMenuItem.separator())
 
@@ -645,6 +671,45 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             overlayWindow.isVisible
         {
             overlayWindow.overlayView.redo()
+        }
+    }
+    
+    @objc func copySelected() {
+        if let currentScreen = getCurrentScreen(),
+            let overlayWindow = overlayWindows[currentScreen],
+            overlayWindow.isVisible,
+            overlayWindow.overlayView.currentTool == .select
+        {
+            overlayWindow.overlayView.copySelectedObjects()
+        }
+    }
+    
+    @objc func cutSelected() {
+        if let currentScreen = getCurrentScreen(),
+            let overlayWindow = overlayWindows[currentScreen],
+            overlayWindow.isVisible,
+            overlayWindow.overlayView.currentTool == .select
+        {
+            overlayWindow.overlayView.cutSelectedObjects()
+        }
+    }
+    
+    @objc func pasteSelected() {
+        if let currentScreen = getCurrentScreen(),
+            let overlayWindow = overlayWindows[currentScreen],
+            overlayWindow.isVisible
+        {
+            overlayWindow.overlayView.pasteObjects()
+        }
+    }
+    
+    @objc func duplicateSelected() {
+        if let currentScreen = getCurrentScreen(),
+            let overlayWindow = overlayWindows[currentScreen],
+            overlayWindow.isVisible,
+            overlayWindow.overlayView.currentTool == .select
+        {
+            overlayWindow.overlayView.duplicateSelectedObjects()
         }
     }
 

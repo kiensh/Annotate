@@ -43,6 +43,10 @@ class OverlayView: NSView, NSTextFieldDelegate {
     var selectionRectStart: NSPoint?
     var selectionRectEnd: NSPoint?
     
+    // Clipboard for copy/paste
+    var clipboard: [SelectedObject: Any] = [:]  // Stores copied object data
+    var lastMousePosition: NSPoint = .zero  // Track mouse position for paste
+    
     var currentColor: NSColor = .systemRed
     var currentTool: ToolType = .pen
     var currentLineWidth: CGFloat = 3.0
@@ -332,6 +336,12 @@ class OverlayView: NSView, NSTextFieldDelegate {
                     target.needsDisplay = true
                 }
             }
+        case .pasteObjects(_):
+            // Paste undo is handled by individual add actions for each pasted object
+            break
+        case .cutObjects(_):
+            // Cut undo is handled by individual remove actions for each cut object
+            break
         }
     }
 
@@ -1080,6 +1090,283 @@ class OverlayView: NSView, NSTextFieldDelegate {
         case .none:
             break
         }
+    }
+    
+    // MARK: - Copy/Paste/Cut/Duplicate
+    
+    /// Copy selected objects to clipboard
+    func copySelectedObjects() {
+        guard !selectedObjects.isEmpty else { return }
+        
+        clipboard.removeAll()
+        
+        for object in selectedObjects {
+            switch object {
+            case .arrow(let index):
+                guard index < arrows.count else { continue }
+                clipboard[object] = arrows[index]
+                
+            case .line(let index):
+                guard index < lines.count else { continue }
+                clipboard[object] = lines[index]
+                
+            case .rectangle(let index):
+                guard index < rectangles.count else { continue }
+                clipboard[object] = rectangles[index]
+                
+            case .circle(let index):
+                guard index < circles.count else { continue }
+                clipboard[object] = circles[index]
+                
+            case .path(let index):
+                guard index < paths.count else { continue }
+                clipboard[object] = paths[index]
+                
+            case .highlight(let index):
+                guard index < highlightPaths.count else { continue }
+                clipboard[object] = highlightPaths[index]
+                
+            case .text(let index):
+                guard index < textAnnotations.count else { continue }
+                clipboard[object] = textAnnotations[index]
+                
+            case .counter(let index):
+                guard index < counterAnnotations.count else { continue }
+                clipboard[object] = counterAnnotations[index]
+                
+            case .none:
+                continue
+            }
+        }
+    }
+    
+    /// Cut selected objects (copy + delete)
+    func cutSelectedObjects() {
+        guard !selectedObjects.isEmpty else { return }
+        
+        copySelectedObjects()
+        deleteSelectedObjects()
+    }
+    
+    /// Paste objects from clipboard at current cursor position
+    func pasteObjects() {
+        guard !clipboard.isEmpty else { return }
+        
+        // Get current mouse cursor position in window coordinates
+        guard let window = window else { return }
+        let screenLocation = NSEvent.mouseLocation
+        let windowLocation = window.convertPoint(fromScreen: screenLocation)
+        let cursorPosition = convert(windowLocation, from: nil)
+        
+        // Calculate the center of the clipboard objects
+        let clipboardCenter = calculateClipboardCenter()
+        
+        // Calculate offset to move clipboard center to cursor position
+        let offsetX = cursorPosition.x - clipboardCenter.x
+        let offsetY = cursorPosition.y - clipboardCenter.y
+        
+        // Use internal paste method
+        pasteObjectsWithOffset(offsetX: offsetX, offsetY: offsetY)
+    }
+    
+    /// Internal method to paste objects with specific offset
+    private func pasteObjectsWithOffset(offsetX: CGFloat, offsetY: CGFloat) {
+        guard !clipboard.isEmpty else { return }
+        
+        var pastedObjects: [SelectedObject] = []
+        
+        // Paste each object with the calculated offset
+        for (object, data) in clipboard {
+            switch object {
+            case .arrow:
+                guard var arrow = data as? Arrow else { continue }
+                arrow.startPoint = NSPoint(x: arrow.startPoint.x + offsetX, y: arrow.startPoint.y + offsetY)
+                arrow.endPoint = NSPoint(x: arrow.endPoint.x + offsetX, y: arrow.endPoint.y + offsetY)
+                arrow.creationTime = CACurrentMediaTime()
+                arrows.append(arrow)
+                registerUndo(action: .addArrow(arrow))
+                pastedObjects.append(.arrow(index: arrows.count - 1))
+                
+            case .line:
+                guard var line = data as? Line else { continue }
+                line.startPoint = NSPoint(x: line.startPoint.x + offsetX, y: line.startPoint.y + offsetY)
+                line.endPoint = NSPoint(x: line.endPoint.x + offsetX, y: line.endPoint.y + offsetY)
+                line.creationTime = CACurrentMediaTime()
+                lines.append(line)
+                registerUndo(action: .addLine(line))
+                pastedObjects.append(.line(index: lines.count - 1))
+                
+            case .rectangle:
+                guard var rect = data as? Rectangle else { continue }
+                rect.startPoint = NSPoint(x: rect.startPoint.x + offsetX, y: rect.startPoint.y + offsetY)
+                rect.endPoint = NSPoint(x: rect.endPoint.x + offsetX, y: rect.endPoint.y + offsetY)
+                rect.creationTime = CACurrentMediaTime()
+                rectangles.append(rect)
+                registerUndo(action: .addRectangle(rect))
+                pastedObjects.append(.rectangle(index: rectangles.count - 1))
+                
+            case .circle:
+                guard var circle = data as? Circle else { continue }
+                circle.startPoint = NSPoint(x: circle.startPoint.x + offsetX, y: circle.startPoint.y + offsetY)
+                circle.endPoint = NSPoint(x: circle.endPoint.x + offsetX, y: circle.endPoint.y + offsetY)
+                circle.creationTime = CACurrentMediaTime()
+                circles.append(circle)
+                registerUndo(action: .addCircle(circle))
+                pastedObjects.append(.circle(index: circles.count - 1))
+                
+            case .path:
+                guard var path = data as? DrawingPath else { continue }
+                // Offset all points in the path
+                path.points = path.points.map { timedPoint in
+                    TimedPoint(
+                        point: NSPoint(x: timedPoint.point.x + offsetX, y: timedPoint.point.y + offsetY),
+                        timestamp: CACurrentMediaTime()
+                    )
+                }
+                paths.append(path)
+                registerUndo(action: .addPath(path))
+                pastedObjects.append(.path(index: paths.count - 1))
+                
+            case .highlight:
+                guard var highlight = data as? DrawingPath else { continue }
+                // Offset all points in the highlight
+                highlight.points = highlight.points.map { timedPoint in
+                    TimedPoint(
+                        point: NSPoint(x: timedPoint.point.x + offsetX, y: timedPoint.point.y + offsetY),
+                        timestamp: CACurrentMediaTime()
+                    )
+                }
+                highlightPaths.append(highlight)
+                registerUndo(action: .addHighlight(highlight))
+                pastedObjects.append(.highlight(index: highlightPaths.count - 1))
+                
+            case .text:
+                guard var text = data as? TextAnnotation else { continue }
+                text.position = NSPoint(x: text.position.x + offsetX, y: text.position.y + offsetY)
+                textAnnotations.append(text)
+                registerUndo(action: .addText(text))
+                pastedObjects.append(.text(index: textAnnotations.count - 1))
+                
+            case .counter:
+                guard var counter = data as? CounterAnnotation else { continue }
+                counter.position = NSPoint(x: counter.position.x + offsetX, y: counter.position.y + offsetY)
+                counter.number = nextCounterNumber
+                counter.creationTime = CACurrentMediaTime()
+                counterAnnotations.append(counter)
+                registerUndo(action: .addCounter(counter))
+                pastedObjects.append(.counter(index: counterAnnotations.count - 1))
+                nextCounterNumber += 1
+                
+            case .none:
+                continue
+            }
+        }
+        
+        // Select the newly pasted objects and switch to select mode
+        selectedObjects = Set(pastedObjects)
+        currentTool = .select
+        
+        needsDisplay = true
+    }
+    
+    /// Calculate the center point of objects in clipboard
+    func calculateClipboardCenter() -> NSPoint {
+        guard !clipboard.isEmpty else { return .zero }
+        
+        var minX = CGFloat.greatestFiniteMagnitude
+        var minY = CGFloat.greatestFiniteMagnitude
+        var maxX = -CGFloat.greatestFiniteMagnitude
+        var maxY = -CGFloat.greatestFiniteMagnitude
+        
+        for (object, data) in clipboard {
+            switch object {
+            case .arrow:
+                guard let arrow = data as? Arrow else { continue }
+                minX = min(minX, min(arrow.startPoint.x, arrow.endPoint.x))
+                minY = min(minY, min(arrow.startPoint.y, arrow.endPoint.y))
+                maxX = max(maxX, max(arrow.startPoint.x, arrow.endPoint.x))
+                maxY = max(maxY, max(arrow.startPoint.y, arrow.endPoint.y))
+                
+            case .line:
+                guard let line = data as? Line else { continue }
+                minX = min(minX, min(line.startPoint.x, line.endPoint.x))
+                minY = min(minY, min(line.startPoint.y, line.endPoint.y))
+                maxX = max(maxX, max(line.startPoint.x, line.endPoint.x))
+                maxY = max(maxY, max(line.startPoint.y, line.endPoint.y))
+                
+            case .rectangle:
+                guard let rect = data as? Rectangle else { continue }
+                minX = min(minX, min(rect.startPoint.x, rect.endPoint.x))
+                minY = min(minY, min(rect.startPoint.y, rect.endPoint.y))
+                maxX = max(maxX, max(rect.startPoint.x, rect.endPoint.x))
+                maxY = max(maxY, max(rect.startPoint.y, rect.endPoint.y))
+                
+            case .circle:
+                guard let circle = data as? Circle else { continue }
+                minX = min(minX, min(circle.startPoint.x, circle.endPoint.x))
+                minY = min(minY, min(circle.startPoint.y, circle.endPoint.y))
+                maxX = max(maxX, max(circle.startPoint.x, circle.endPoint.x))
+                maxY = max(maxY, max(circle.startPoint.y, circle.endPoint.y))
+                
+            case .path:
+                guard let path = data as? DrawingPath, !path.points.isEmpty else { continue }
+                for point in path.points {
+                    minX = min(minX, point.point.x)
+                    minY = min(minY, point.point.y)
+                    maxX = max(maxX, point.point.x)
+                    maxY = max(maxY, point.point.y)
+                }
+                
+            case .highlight:
+                guard let highlight = data as? DrawingPath, !highlight.points.isEmpty else { continue }
+                for point in highlight.points {
+                    minX = min(minX, point.point.x)
+                    minY = min(minY, point.point.y)
+                    maxX = max(maxX, point.point.x)
+                    maxY = max(maxY, point.point.y)
+                }
+                
+            case .text:
+                guard let text = data as? TextAnnotation else { continue }
+                // Approximate text bounds (using position as center)
+                let estimatedWidth: CGFloat = CGFloat(text.text.count) * 8.0  // Rough estimate
+                let estimatedHeight: CGFloat = 20.0  // Rough estimate
+                minX = min(minX, text.position.x)
+                minY = min(minY, text.position.y)
+                maxX = max(maxX, text.position.x + estimatedWidth)
+                maxY = max(maxY, text.position.y + estimatedHeight)
+                
+            case .counter:
+                guard let counter = data as? CounterAnnotation else { continue }
+                let radius: CGFloat = 15.0  // Counter circle radius
+                minX = min(minX, counter.position.x - radius)
+                minY = min(minY, counter.position.y - radius)
+                maxX = max(maxX, counter.position.x + radius)
+                maxY = max(maxY, counter.position.y + radius)
+                
+            case .none:
+                continue
+            }
+        }
+        
+        // Return the center point of the bounding box
+        return NSPoint(x: (minX + maxX) / 2.0, y: (minY + maxY) / 2.0)
+    }
+    
+    /// Duplicate selected objects with a small offset
+    func duplicateSelectedObjects() {
+        guard !selectedObjects.isEmpty else { return }
+        
+        // Save current selection to clipboard
+        copySelectedObjects()
+        
+        // Calculate offset (20 pixels down and right)
+        let duplicateOffset: CGFloat = 20.0
+        let offsetX = duplicateOffset
+        let offsetY = -duplicateOffset  // Negative for visual downward movement
+        
+        // Use internal paste method with fixed offset
+        pasteObjectsWithOffset(offsetX: offsetX, offsetY: offsetY)
     }
 
     func createTextField(

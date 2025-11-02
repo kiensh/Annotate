@@ -113,6 +113,7 @@ class OverlayWindow: NSWindow {
     override func mouseDown(with event: NSEvent) {
         let startPoint = event.locationInWindow
         anchorPoint = startPoint
+        overlayView.lastMousePosition = startPoint  // Track mouse position for paste
         wasOptionPressedOnMouseDown = event.modifierFlags.contains(.option)
         isCenterModeActive = wasOptionPressedOnMouseDown
         wasShiftPressedOnMouseDown = event.modifierFlags.contains(.shift)
@@ -320,6 +321,7 @@ class OverlayWindow: NSWindow {
     override func mouseDragged(with event: NSEvent) {
         overlayView.needsDisplay = true
         let currentPoint = event.locationInWindow
+        overlayView.lastMousePosition = currentPoint  // Track mouse position for paste
         
         // Handle rectangle selection drawing
         if overlayView.currentTool == .select && overlayView.isDrawingSelectionRect {
@@ -1095,6 +1097,45 @@ class OverlayWindow: NSWindow {
                     self?.currentFeedbackView = nil
                 }
             }
+        }
+    }
+    
+    // MARK: - Keyboard Commands for Copy/Paste/Cut/Duplicate
+    
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        // Check for Command key combinations
+        guard event.modifierFlags.contains(.command) else {
+            return super.performKeyEquivalent(with: event)
+        }
+        
+        // Handle copy/paste/cut/duplicate only in select mode
+        guard overlayView.currentTool == .select else {
+            return super.performKeyEquivalent(with: event)
+        }
+        
+        switch event.charactersIgnoringModifiers?.lowercased() {
+        case "c":
+            // Cmd+C - Copy
+            overlayView.copySelectedObjects()
+            return true
+            
+        case "x":
+            // Cmd+X - Cut
+            overlayView.cutSelectedObjects()
+            return true
+            
+        case "v":
+            // Cmd+V - Paste
+            overlayView.pasteObjects()
+            return true
+            
+        case "d":
+            // Cmd+D - Duplicate
+            overlayView.duplicateSelectedObjects()
+            return true
+            
+        default:
+            return super.performKeyEquivalent(with: event)
         }
     }
 }

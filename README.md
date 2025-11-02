@@ -145,6 +145,15 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 | <kbd>Command</kbd> + <kbd>Scroll</kbd> | **Adjust Width** | Quickly change line width |
 | <kbd>Shift</kbd> (while drawing) | **Constrain** | Lines: 45° angles; Pen/Highlighter: straight |
 
+#### 📋 Copy/Paste (Select Mode Only)
+
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| <kbd>Command</kbd> + <kbd>C</kbd> | **Copy** | Copy selected objects to clipboard |
+| <kbd>Command</kbd> + <kbd>X</kbd> | **Cut** | Cut selected objects (copy + delete) |
+| <kbd>Command</kbd> + <kbd>V</kbd> | **Paste** | Paste objects at mouse cursor position |
+| <kbd>Command</kbd> + <kbd>D</kbd> | **Duplicate** | Duplicate selected objects with offset |
+
 #### 🪟 Overlay Controls
 
 | Shortcut | Action | Description |
@@ -223,6 +232,14 @@ The Select tool allows you to manipulate existing annotations with precision:
 - **Move Objects**:
   - Click anywhere inside the blue bounding box and drag to move selected objects
   - Multiple selected objects move together, maintaining their relative positions
+  
+- **Copy/Paste/Cut/Duplicate**:
+  - **Copy** (<kbd>Cmd</kbd>+<kbd>C</kbd>): Copy selected objects to clipboard
+  - **Cut** (<kbd>Cmd</kbd>+<kbd>X</kbd>): Cut selected objects (copy and delete)
+  - **Paste** (<kbd>Cmd</kbd>+<kbd>V</kbd>): Paste objects at mouse cursor position
+    - Automatically switches to select mode with pasted objects selected
+  - **Duplicate** (<kbd>Cmd</kbd>+<kbd>D</kbd>): Duplicate selected objects with a small offset
+    - Keeps you in select mode with duplicated objects selected
   
 - **Delete Selected**:
   - Press <kbd>Delete</kbd> to remove all selected objects
