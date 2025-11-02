@@ -149,6 +149,7 @@ Sometimes you need to emphasize a part of your screen or share ideas visually, a
 
 | Shortcut | Action | Description |
 |----------|--------|-------------|
+| <kbd>Command</kbd> + <kbd>A</kbd> | **Select All** | Select all objects on the canvas |
 | <kbd>Command</kbd> + <kbd>C</kbd> | **Copy** | Copy selected objects to clipboard |
 | <kbd>Command</kbd> + <kbd>X</kbd> | **Cut** | Cut selected objects (copy + delete) |
 | <kbd>Command</kbd> + <kbd>V</kbd> | **Paste** | Paste objects at mouse cursor position |
@@ -234,6 +235,7 @@ The Select tool allows you to manipulate existing annotations with precision:
   - Multiple selected objects move together, maintaining their relative positions
   
 - **Copy/Paste/Cut/Duplicate**:
+  - **Select All** (<kbd>Cmd</kbd>+<kbd>A</kbd>): Select all objects on the canvas
   - **Copy** (<kbd>Cmd</kbd>+<kbd>C</kbd>): Copy selected objects to clipboard
   - **Cut** (<kbd>Cmd</kbd>+<kbd>X</kbd>): Cut selected objects (copy and delete)
   - **Paste** (<kbd>Cmd</kbd>+<kbd>V</kbd>): Paste objects at mouse cursor position

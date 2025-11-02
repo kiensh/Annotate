@@ -272,6 +272,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
                 action: #selector(duplicateSelected),
                 keyEquivalent: "d")
             menu.addItem(duplicateItem)
+            
+            let selectAllItem = NSMenuItem(
+                title: "Select All",
+                action: #selector(selectAll),
+                keyEquivalent: "a")
+            menu.addItem(selectAllItem)
 
             menu.addItem(NSMenuItem.separator())
 
@@ -710,6 +716,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             overlayWindow.overlayView.currentTool == .select
         {
             overlayWindow.overlayView.duplicateSelectedObjects()
+        }
+    }
+    
+    @objc func selectAll() {
+        if let currentScreen = getCurrentScreen(),
+            let overlayWindow = overlayWindows[currentScreen],
+            overlayWindow.isVisible,
+            overlayWindow.overlayView.currentTool == .select
+        {
+            overlayWindow.overlayView.selectAllObjects()
         }
     }
 

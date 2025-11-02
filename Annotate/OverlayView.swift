@@ -1368,6 +1368,56 @@ class OverlayView: NSView, NSTextFieldDelegate {
         // Use internal paste method with fixed offset
         pasteObjectsWithOffset(offsetX: offsetX, offsetY: offsetY)
     }
+    
+    /// Select all objects in the overlay
+    func selectAllObjects() {
+        // Only works in select mode
+        guard currentTool == .select else { return }
+        
+        selectedObjects.removeAll()
+        
+        // Add all arrows
+        for i in 0..<arrows.count {
+            selectedObjects.insert(.arrow(index: i))
+        }
+        
+        // Add all lines
+        for i in 0..<lines.count {
+            selectedObjects.insert(.line(index: i))
+        }
+        
+        // Add all paths
+        for i in 0..<paths.count {
+            selectedObjects.insert(.path(index: i))
+        }
+        
+        // Add all highlights
+        for i in 0..<highlightPaths.count {
+            selectedObjects.insert(.highlight(index: i))
+        }
+        
+        // Add all rectangles
+        for i in 0..<rectangles.count {
+            selectedObjects.insert(.rectangle(index: i))
+        }
+        
+        // Add all circles
+        for i in 0..<circles.count {
+            selectedObjects.insert(.circle(index: i))
+        }
+        
+        // Add all text annotations
+        for i in 0..<textAnnotations.count {
+            selectedObjects.insert(.text(index: i))
+        }
+        
+        // Add all counters
+        for i in 0..<counterAnnotations.count {
+            selectedObjects.insert(.counter(index: i))
+        }
+        
+        needsDisplay = true
+    }
 
     func createTextField(
         at point: NSPoint, withText existingText: String = "", width: CGFloat = 300

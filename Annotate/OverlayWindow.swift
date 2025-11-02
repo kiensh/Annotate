@@ -1114,6 +1114,11 @@ class OverlayWindow: NSWindow {
         }
         
         switch event.charactersIgnoringModifiers?.lowercased() {
+        case "a":
+            // Cmd+A - Select All
+            overlayView.selectAllObjects()
+            return true
+            
         case "c":
             // Cmd+C - Copy
             overlayView.copySelectedObjects()
