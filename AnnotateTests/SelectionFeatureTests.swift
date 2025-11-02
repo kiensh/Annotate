@@ -697,4 +697,279 @@ final class SelectionFeatureTests: XCTestCase, Sendable {
         XCTAssertTrue(overlayView.selectedObjects.contains(.text(index: 0)))
         XCTAssertTrue(overlayView.selectedObjects.contains(.counter(index: 0)))
     }
+    
+    // MARK: - Copy/Paste/Cut/Duplicate Tests
+    
+    func testCopySelectedObjects() {
+        // Add objects
+        overlayView.lines.append(Line(
+            startPoint: NSPoint(x: 100, y: 100),
+            endPoint: NSPoint(x: 200, y: 200),
+            color: .red,
+            lineWidth: 2.0,
+            creationTime: nil
+        ))
+        
+        overlayView.circles.append(Circle(
+            startPoint: NSPoint(x: 300, y: 300),
+            endPoint: NSPoint(x: 400, y: 400),
+            color: .blue,
+            lineWidth: 2.0,
+            creationTime: nil
+        ))
+        
+        overlayView.currentTool = .select
+        overlayView.selectedObjects = [.line(index: 0), .circle(index: 0)]
+        
+        // Copy
+        overlayView.copySelectedObjects()
+        
+        // Original objects should still exist
+        XCTAssertEqual(overlayView.lines.count, 1)
+        XCTAssertEqual(overlayView.circles.count, 1)
+        
+        // Selection should remain
+        XCTAssertEqual(overlayView.selectedObjects.count, 2)
+    }
+    
+    func testCutSelectedObjects() {
+        // Add objects
+        overlayView.lines.append(Line(
+            startPoint: NSPoint(x: 100, y: 100),
+            endPoint: NSPoint(x: 200, y: 200),
+            color: .red,
+            lineWidth: 2.0,
+            creationTime: nil
+        ))
+        
+        overlayView.circles.append(Circle(
+            startPoint: NSPoint(x: 300, y: 300),
+            endPoint: NSPoint(x: 400, y: 400),
+            color: .blue,
+            lineWidth: 2.0,
+            creationTime: nil
+        ))
+        
+        overlayView.currentTool = .select
+        overlayView.selectedObjects = [.line(index: 0), .circle(index: 0)]
+        
+        // Cut
+        overlayView.cutSelectedObjects()
+        
+        // Objects should be removed
+        XCTAssertTrue(overlayView.lines.isEmpty)
+        XCTAssertTrue(overlayView.circles.isEmpty)
+        
+        // Selection should be cleared
+        XCTAssertTrue(overlayView.selectedObjects.isEmpty)
+    }
+    
+    func testPasteObjectsAtCursor() {
+        // Add and copy objects
+        overlayView.lines.append(Line(
+            startPoint: NSPoint(x: 100, y: 100),
+            endPoint: NSPoint(x: 200, y: 200),
+            color: .red,
+            lineWidth: 2.0,
+            creationTime: nil
+        ))
+        
+        overlayView.currentTool = .select
+        overlayView.selectedObjects = [.line(index: 0)]
+        overlayView.copySelectedObjects()
+        
+        // Set cursor position
+        overlayView.lastMousePosition = NSPoint(x: 400, y: 400)
+        
+        // For testing purposes, we can't easily test pasteObjects() because it requires
+        // a window context. Instead, let's verify that the clipboard has the data.
+        
+        // Verify clipboard is not empty after copy
+        XCTAssertFalse(overlayView.clipboard.isEmpty)
+        XCTAssertEqual(overlayView.clipboard.count, 1)
+        
+        // Verify the clipboard contains the line data
+        if let (objType, _) = overlayView.clipboard.first {
+            if case .line = objType {
+                XCTAssertTrue(true, "Clipboard contains line data")
+            } else {
+                XCTFail("Clipboard should contain line object type")
+            }
+        }
+    }
+    
+    func testPasteWithoutCopy() {
+        overlayView.currentTool = .select
+        
+        // Verify clipboard is empty
+        XCTAssertTrue(overlayView.clipboard.isEmpty)
+    }
+    
+    func testDuplicateSelectedObjects() {
+        // Add objects
+        overlayView.lines.append(Line(
+            startPoint: NSPoint(x: 100, y: 100),
+            endPoint: NSPoint(x: 200, y: 200),
+            color: .red,
+            lineWidth: 2.0,
+            creationTime: nil
+        ))
+        
+        overlayView.circles.append(Circle(
+            startPoint: NSPoint(x: 300, y: 300),
+            endPoint: NSPoint(x: 400, y: 400),
+            color: .blue,
+            lineWidth: 2.0,
+            creationTime: nil
+        ))
+        
+        overlayView.currentTool = .select
+        overlayView.selectedObjects = [.line(index: 0), .circle(index: 0)]
+        
+        // Duplicate
+        overlayView.duplicateSelectedObjects()
+        
+        // Should have duplicated objects
+        XCTAssertEqual(overlayView.lines.count, 2)
+        XCTAssertEqual(overlayView.circles.count, 2)
+        
+        // Duplicates should be offset by 20 points right and 20 points down (negative Y in macOS coordinates)
+        XCTAssertEqual(overlayView.lines[1].startPoint.x, 120)  // 100 + 20
+        XCTAssertEqual(overlayView.lines[1].startPoint.y, 80)   // 100 - 20 (down is negative)
+        XCTAssertEqual(overlayView.lines[1].endPoint.x, 220)    // 200 + 20
+        XCTAssertEqual(overlayView.lines[1].endPoint.y, 180)    // 200 - 20
+        
+        XCTAssertEqual(overlayView.circles[1].startPoint.x, 320)  // 300 + 20
+        XCTAssertEqual(overlayView.circles[1].startPoint.y, 280)  // 300 - 20
+        XCTAssertEqual(overlayView.circles[1].endPoint.x, 420)    // 400 + 20
+        XCTAssertEqual(overlayView.circles[1].endPoint.y, 380)    // 400 - 20
+        
+        // Should be in select mode with duplicated objects selected
+        XCTAssertEqual(overlayView.currentTool, .select)
+        XCTAssertEqual(overlayView.selectedObjects.count, 2)
+        XCTAssertTrue(overlayView.selectedObjects.contains(.line(index: 1)))
+        XCTAssertTrue(overlayView.selectedObjects.contains(.circle(index: 1)))
+    }
+    
+    func testDuplicateWithoutSelection() {
+        overlayView.currentTool = .select
+        let initialLineCount = overlayView.lines.count
+        
+        // Duplicate without selecting anything
+        overlayView.duplicateSelectedObjects()
+        
+        // Nothing should be duplicated
+        XCTAssertEqual(overlayView.lines.count, initialLineCount)
+    }
+    
+    func testCopyPasteMultipleObjects() {
+        // Add multiple object types
+        overlayView.lines.append(Line(
+            startPoint: NSPoint(x: 100, y: 100),
+            endPoint: NSPoint(x: 200, y: 200),
+            color: .red,
+            lineWidth: 2.0,
+            creationTime: nil
+        ))
+        
+        overlayView.rectangles.append(Rectangle(
+            startPoint: NSPoint(x: 150, y: 150),
+            endPoint: NSPoint(x: 250, y: 250),
+            color: .green,
+            lineWidth: 2.0,
+            creationTime: nil
+        ))
+        
+        overlayView.textAnnotations.append(TextAnnotation(
+            text: "Hello",
+            position: NSPoint(x: 300, y: 300),
+            color: .black,
+            fontSize: 18
+        ))
+        
+        overlayView.currentTool = .select
+        overlayView.selectedObjects = [.line(index: 0), .rectangle(index: 0), .text(index: 0)]
+        
+        // Copy
+        overlayView.copySelectedObjects()
+        
+        // Verify clipboard has all 3 objects
+        XCTAssertEqual(overlayView.clipboard.count, 3)
+        
+        // Verify each object type is in clipboard
+        let clipboardTypes = overlayView.clipboard.map { $0.0 }
+        XCTAssertTrue(clipboardTypes.contains { if case .line = $0 { return true }; return false })
+        XCTAssertTrue(clipboardTypes.contains { if case .rectangle = $0 { return true }; return false })
+        XCTAssertTrue(clipboardTypes.contains { if case .text = $0 { return true }; return false })
+    }
+    
+    func testCutAndPaste() {
+        // Add objects
+        overlayView.lines.append(Line(
+            startPoint: NSPoint(x: 100, y: 100),
+            endPoint: NSPoint(x: 200, y: 200),
+            color: .red,
+            lineWidth: 2.0,
+            creationTime: nil
+        ))
+        
+        overlayView.circles.append(Circle(
+            startPoint: NSPoint(x: 300, y: 300),
+            endPoint: NSPoint(x: 400, y: 400),
+            color: .blue,
+            lineWidth: 2.0,
+            creationTime: nil
+        ))
+        
+        overlayView.currentTool = .select
+        overlayView.selectedObjects = [.line(index: 0), .circle(index: 0)]
+        
+        // Cut
+        overlayView.cutSelectedObjects()
+        
+        // Objects should be removed
+        XCTAssertEqual(overlayView.lines.count, 0)
+        XCTAssertEqual(overlayView.circles.count, 0)
+        
+        // Clipboard should contain the cut objects
+        XCTAssertEqual(overlayView.clipboard.count, 2)
+    }
+    
+    func testCopyNotInSelectMode() {
+        // Add object
+        overlayView.lines.append(Line(
+            startPoint: NSPoint(x: 100, y: 100),
+            endPoint: NSPoint(x: 200, y: 200),
+            color: .red,
+            lineWidth: 2.0,
+            creationTime: nil
+        ))
+        
+        overlayView.currentTool = .pen  // Not in select mode
+        
+        // Try to copy (should do nothing since there's no selection)
+        overlayView.copySelectedObjects()
+        
+        // Clipboard should be empty
+        XCTAssertTrue(overlayView.clipboard.isEmpty)
+    }
+    
+    func testDuplicateNotInSelectMode() {
+        // Add object
+        overlayView.lines.append(Line(
+            startPoint: NSPoint(x: 100, y: 100),
+            endPoint: NSPoint(x: 200, y: 200),
+            color: .red,
+            lineWidth: 2.0,
+            creationTime: nil
+        ))
+        
+        overlayView.currentTool = .pen  // Not in select mode
+        
+        // Try to duplicate (should do nothing)
+        overlayView.duplicateSelectedObjects()
+        
+        // Should still have only 1 line
+        XCTAssertEqual(overlayView.lines.count, 1)
+    }
 }

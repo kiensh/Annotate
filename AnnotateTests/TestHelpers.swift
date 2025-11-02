@@ -165,31 +165,23 @@ extension XCTestCase {
         wait(for: [expectation], timeout: duration + 1)
     }
 
-    func assertEventually(
+    nonisolated func assertEventually(
         timeout: TimeInterval = TestConstants.defaultTimeout,
         interval: TimeInterval = TestConstants.defaultDelay,
         description: String? = nil,
-        condition: @escaping () -> Bool
+        condition: @escaping @Sendable () -> Bool
     ) {
         let expectation = self.expectation(description: description ?? "Async condition")
 
-        var fulfilled = false
         let timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { timer in
             if condition() {
                 timer.invalidate()
-                if !fulfilled {
-                    fulfilled = true
-                    expectation.fulfill()
-                }
+                expectation.fulfill()
             }
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + timeout) {
             timer.invalidate()
-            if !fulfilled {
-                fulfilled = true
-                expectation.fulfill()
-            }
         }
 
         wait(for: [expectation], timeout: timeout + 1)
