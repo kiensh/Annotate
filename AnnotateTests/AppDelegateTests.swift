@@ -123,15 +123,17 @@ final class AppDelegateTests: XCTestCase, Sendable {
             return
         }
 
-        // Ensure window starts visible - toggle until visible with timeout
-        let maxAttempts = 10
-        var attempts = 0
-        while !overlayWindow.isVisible && attempts < maxAttempts {
+        // Ensure window starts visible - make sure we end with window visible
+        if !overlayWindow.isVisible {
             appDelegate.toggleOverlay()
-            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
-            attempts += 1
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
         }
-        XCTAssertTrue(overlayWindow.isVisible, "Window failed to become visible after \(maxAttempts) attempts")
+        
+        // If still not visible after one toggle and wait, skip this test as the windowing system isn't cooperating
+        guard overlayWindow.isVisible else {
+            XCTFail("Window could not be made visible - skipping test due to windowing system issues")
+            return
+        }
 
         let testPath = DrawingPath(
             points: [
@@ -151,9 +153,11 @@ final class AppDelegateTests: XCTestCase, Sendable {
 
         // Toggle overlay off
         appDelegate.toggleOverlay()
+        RunLoop.current.run(until: Date().addingTimeInterval(0.1))
 
         // Toggle it back on - should clear drawings because clearDrawingsOnStartKey is true
         appDelegate.toggleOverlay()
+        RunLoop.current.run(until: Date().addingTimeInterval(0.1))
 
         // Verify drawings were cleared
         XCTAssertEqual(overlayWindow.overlayView.paths.count, 0, "Paths should be cleared")

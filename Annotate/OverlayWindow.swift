@@ -20,6 +20,13 @@ class OverlayWindow: NSWindow {
     // Track the current feedback view to remove it when a new one appears
     private var currentFeedbackView: NSView?
     private var feedbackRemovalTask: DispatchWorkItem?
+    
+    // Create undo manager for this window
+    private let _undoManager = UndoManager()
+    
+    override var undoManager: UndoManager? {
+        return _undoManager
+    }
 
     var currentColor: NSColor {
         get { overlayView.currentColor }
@@ -106,14 +113,100 @@ class OverlayWindow: NSWindow {
     override func mouseDown(with event: NSEvent) {
         let startPoint = event.locationInWindow
         anchorPoint = startPoint
+        overlayView.lastMousePosition = startPoint  // Track mouse position for paste
         wasOptionPressedOnMouseDown = event.modifierFlags.contains(.option)
         isCenterModeActive = wasOptionPressedOnMouseDown
         wasShiftPressedOnMouseDown = event.modifierFlags.contains(.shift)
         isShiftConstraintActive = wasShiftPressedOnMouseDown
         let clickCount = event.clickCount
+        let shiftPressed = event.modifierFlags.contains(.shift)
 
         if let activeTextField = overlayView.activeTextField {
             overlayView.finalizeTextAnnotation(activeTextField)
+        }
+        
+        // Handle selection mode
+        if overlayView.currentTool == .select {
+            // First check if we clicked inside the bounding box of already selected objects
+            if !overlayView.selectedObjects.isEmpty && overlayView.isPointInSelectionBoundingBox(startPoint) {
+                // Clicked inside the selection bounding box
+                if shiftPressed {
+                    // Shift+click inside bounding box - find which specific object to toggle
+                    let foundObject = overlayView.findObjectAt(point: startPoint)
+                    if foundObject != .none {
+                        if overlayView.selectedObjects.contains(foundObject) {
+                            overlayView.selectedObjects.remove(foundObject)
+                        } else {
+                            overlayView.selectedObjects.insert(foundObject)
+                        }
+                    }
+                    overlayView.selectionDragOffset = nil
+                } else {
+                    // Regular click inside bounding box - prepare to drag all selected objects
+                    overlayView.selectionDragOffset = startPoint
+                    
+                    // Store original positions for undo
+                    overlayView.selectionOriginalData.removeAll()
+                    for obj in overlayView.selectedObjects {
+                        if let pos = overlayView.getObjectPosition(obj) {
+                            overlayView.selectionOriginalData[obj] = pos
+                        }
+                    }
+                }
+                
+                overlayView.needsDisplay = true
+                return
+            }
+            
+            // Not inside bounding box, do normal hit test to find objects
+            let foundObject = overlayView.findObjectAt(point: startPoint)
+            
+            if foundObject != .none {
+                // Shift+Click: Toggle object in selection
+                if shiftPressed {
+                    if overlayView.selectedObjects.contains(foundObject) {
+                        overlayView.selectedObjects.remove(foundObject)
+                    } else {
+                        overlayView.selectedObjects.insert(foundObject)
+                    }
+                    // Don't set drag offset for shift+click (we're just toggling selection)
+                    overlayView.selectionDragOffset = nil
+                } else {
+                    // Regular click
+                    if !overlayView.selectedObjects.contains(foundObject) {
+                        // Object not in selection, select only this object
+                        overlayView.selectedObjects = [foundObject]
+                    }
+                    // else: object is already in selection, keep current selection and prepare to drag all
+                    
+                    // Always set drag offset for regular click (for dragging)
+                    overlayView.selectionDragOffset = startPoint
+                }
+                
+                // Store original positions for undo
+                overlayView.selectionOriginalData.removeAll()
+                for obj in overlayView.selectedObjects {
+                    if let pos = overlayView.getObjectPosition(obj) {
+                        overlayView.selectionOriginalData[obj] = pos
+                    }
+                }
+                
+                overlayView.needsDisplay = true
+                return
+            } else {
+                // Clicked on empty space
+                if !shiftPressed {
+                    // Clear selection if not holding shift
+                    overlayView.selectedObjects.removeAll()
+                }
+                // Start rectangle selection
+                overlayView.isDrawingSelectionRect = true
+                overlayView.selectionRectStart = startPoint
+                overlayView.selectionRectEnd = startPoint
+                overlayView.selectionDragOffset = nil  // Not dragging
+                overlayView.needsDisplay = true
+                return
+            }
         }
 
         if overlayView.currentTool == .counter {
@@ -206,6 +299,8 @@ class OverlayWindow: NSWindow {
             break
         case .counter:
             break
+        case .select:
+            break
         }
         overlayView.needsDisplay = true
     }
@@ -226,6 +321,34 @@ class OverlayWindow: NSWindow {
     override func mouseDragged(with event: NSEvent) {
         overlayView.needsDisplay = true
         let currentPoint = event.locationInWindow
+        overlayView.lastMousePosition = currentPoint  // Track mouse position for paste
+        
+        // Handle rectangle selection drawing
+        if overlayView.currentTool == .select && overlayView.isDrawingSelectionRect {
+            overlayView.selectionRectEnd = currentPoint
+            overlayView.needsDisplay = true
+            return
+        }
+        
+        // Handle selection dragging
+        if overlayView.currentTool == .select && !overlayView.selectedObjects.isEmpty {
+            // Get or set drag start point
+            let dragStart = overlayView.selectionDragOffset ?? currentPoint
+            if overlayView.selectionDragOffset == nil {
+                overlayView.selectionDragOffset = currentPoint
+                return  // Wait for next drag event to actually move
+            }
+            
+            let delta = NSPoint(
+                x: currentPoint.x - dragStart.x,
+                y: currentPoint.y - dragStart.y
+            )
+            
+            overlayView.moveSelectedObjects(by: delta)
+            overlayView.selectionDragOffset = currentPoint
+            overlayView.needsDisplay = true
+            return
+        }
 
         if let draggedIndex = overlayView.draggedTextAnnotationIndex,
             let dragOffset = overlayView.dragOffset
@@ -298,12 +421,65 @@ class OverlayWindow: NSWindow {
             break
         case .counter:
             break
+        case .select:
+            break
         }
         overlayView.needsDisplay = true
     }
 
     override func mouseUp(with event: NSEvent) {
         overlayView.needsDisplay = true
+        
+        // Handle rectangle selection end
+        if overlayView.currentTool == .select && overlayView.isDrawingSelectionRect {
+            if let start = overlayView.selectionRectStart, let end = overlayView.selectionRectEnd {
+                let rect = NSRect(
+                    x: min(start.x, end.x),
+                    y: min(start.y, end.y),
+                    width: abs(end.x - start.x),
+                    height: abs(end.y - start.y)
+                )
+                
+                // Find objects in rectangle
+                let objectsInRect = overlayView.findObjectsInRect(rect)
+                
+                // Check if shift is still pressed
+                let shiftPressed = event.modifierFlags.contains(.shift)
+                if shiftPressed {
+                    // Add to existing selection
+                    overlayView.selectedObjects.formUnion(objectsInRect)
+                } else {
+                    // Replace selection
+                    overlayView.selectedObjects = objectsInRect
+                }
+            }
+            
+            overlayView.isDrawingSelectionRect = false
+            overlayView.selectionRectStart = nil
+            overlayView.selectionRectEnd = nil
+            overlayView.needsDisplay = true
+            return
+        }
+        
+        // Handle selection drag end
+        if overlayView.currentTool == .select && !overlayView.selectedObjects.isEmpty {
+            // Register undo for all moved objects
+            for obj in overlayView.selectedObjects {
+                if let originalData = overlayView.selectionOriginalData[obj] {
+                    let newData = overlayView.getObjectPosition(obj)
+                    if let newPos = newData {
+                        overlayView.registerMoveUndo(
+                            object: obj,
+                            from: originalData,
+                            to: newPos
+                        )
+                    }
+                }
+            }
+            overlayView.selectionDragOffset = nil
+            overlayView.selectionOriginalData.removeAll()
+            return
+        }
 
         if let draggedIndex = overlayView.draggedTextAnnotationIndex {
             let oldPosition =
@@ -387,6 +563,8 @@ class OverlayWindow: NSWindow {
             break
         case .counter:
             break
+        case .select:
+            break
         }
         overlayView.needsDisplay = true
         wasOptionPressedOnMouseDown = false
@@ -402,7 +580,7 @@ class OverlayWindow: NSWindow {
     override func keyDown(with event: NSEvent) {
         let cmdPressed = event.modifierFlags.contains(.command)
         let key = event.characters?.lowercased() ?? ""
-
+        
         // Handle single-key shortcuts if no modifiers are pressed
         if !cmdPressed
             && event.modifierFlags.intersection([.command, .option, .control, .shift]).isEmpty
@@ -432,6 +610,9 @@ class OverlayWindow: NSWindow {
             case ShortcutManager.shared.getShortcut(for: .text):
                 AppDelegate.shared?.enableTextMode(NSMenuItem())
                 return
+            case ShortcutManager.shared.getShortcut(for: .select):
+                AppDelegate.shared?.enableSelectMode(NSMenuItem())
+                return
             case ShortcutManager.shared.getShortcut(for: .colorPicker):
                 AppDelegate.shared?.showColorPicker(nil)
                 return
@@ -454,6 +635,12 @@ class OverlayWindow: NSWindow {
                 AppDelegate.shared?.toggleOverlay()
             }
         case 51:  // Delete/Backspace key
+            if event.modifierFlags.contains(.option) {
+                overlayView.clearAll()
+            } else {
+                overlayView.deleteLastItem()
+            }
+        case 117:  // Forward Delete key (fn+delete)
             if event.modifierFlags.contains(.option) {
                 overlayView.clearAll()
             } else {
@@ -585,6 +772,23 @@ class OverlayWindow: NSWindow {
         }
     }
     
+    // Support for mouse backward/forward buttons (typically buttons 3 and 4)
+    override func otherMouseDown(with event: NSEvent) {
+        // Button numbers:
+        // 2 = middle mouse button
+        // 3 = backward button (typically)
+        // 4 = forward button (typically)
+        
+        switch event.buttonNumber {
+        case 3:  // Backward button - Undo
+            overlayView.undo()
+        case 4:  // Forward button - Redo
+            overlayView.redo()
+        default:
+            super.otherMouseDown(with: event)
+        }
+    }
+    
     private func scrollWheelForLineWidth(with event: NSEvent) {
         // Adjust line width with Command + Scroll
         let minLineWidth: CGFloat = 0.5
@@ -665,6 +869,9 @@ class OverlayWindow: NSWindow {
         case .text:
             toolName = "Text"
             icon = "📝"
+        case .select:
+            toolName = "Select"
+            icon = "👆"
         }
 
         // Get current line width
@@ -678,8 +885,8 @@ class OverlayWindow: NSWindow {
         case .pen, .arrow, .line, .highlighter, .rectangle, .circle:
             // Drawing tools: show color background + line preview
             showFeedback(text, lineColor: overlayView.currentColor, lineWidth: currentWidth)
-        case .counter, .text:
-            // Counter and text: show color background but no line preview (they don't use line width)
+        case .counter, .text, .select:
+            // Counter, text, and select: show color background but no line preview (they don't use line width)
             showFeedback(text, lineColor: overlayView.currentColor)
         }
     }
@@ -691,6 +898,7 @@ class OverlayWindow: NSWindow {
     ///   - fadeOutDuration: How long the fade out animation takes (default: 0.5 seconds)
     ///   - lineColor: Optional line color for preview (default: nil for no line)
     ///   - lineWidth: Optional line width for preview (default: nil for no line)
+    
     private func showFeedback(
         _ text: String,
         duration: TimeInterval = 1.5,
@@ -889,6 +1097,50 @@ class OverlayWindow: NSWindow {
                     self?.currentFeedbackView = nil
                 }
             }
+        }
+    }
+    
+    // MARK: - Keyboard Commands for Copy/Paste/Cut/Duplicate
+    
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        // Check for Command key combinations
+        guard event.modifierFlags.contains(.command) else {
+            return super.performKeyEquivalent(with: event)
+        }
+        
+        // Handle copy/paste/cut/duplicate only in select mode
+        guard overlayView.currentTool == .select else {
+            return super.performKeyEquivalent(with: event)
+        }
+        
+        switch event.charactersIgnoringModifiers?.lowercased() {
+        case "a":
+            // Cmd+A - Select All
+            overlayView.selectAllObjects()
+            return true
+            
+        case "c":
+            // Cmd+C - Copy
+            overlayView.copySelectedObjects()
+            return true
+            
+        case "x":
+            // Cmd+X - Cut
+            overlayView.cutSelectedObjects()
+            return true
+            
+        case "v":
+            // Cmd+V - Paste
+            overlayView.pasteObjects()
+            return true
+            
+        case "d":
+            // Cmd+D - Duplicate
+            overlayView.duplicateSelectedObjects()
+            return true
+            
+        default:
+            return super.performKeyEquivalent(with: event)
         }
     }
 }

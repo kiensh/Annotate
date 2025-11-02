@@ -167,6 +167,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
                 keyEquivalent: ShortcutManager.shared.getShortcut(for: .text))
             textModeItem.keyEquivalentModifierMask = []
             menu.addItem(textModeItem)
+            
+            let selectModeItem = NSMenuItem(
+                title: "Select",
+                action: #selector(enableSelectMode(_:)),
+                keyEquivalent: ShortcutManager.shared.getShortcut(for: .select))
+            selectModeItem.keyEquivalentModifierMask = []
+            menu.addItem(selectModeItem)
 
             menu.addItem(NSMenuItem.separator())
 
@@ -239,6 +246,38 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
                 action: #selector(redo),
                 keyEquivalent: "Z")
             menu.addItem(redoItem)
+            
+            menu.addItem(NSMenuItem.separator())
+            
+            let copyItem = NSMenuItem(
+                title: "Copy",
+                action: #selector(copySelected),
+                keyEquivalent: "c")
+            menu.addItem(copyItem)
+            
+            let cutItem = NSMenuItem(
+                title: "Cut",
+                action: #selector(cutSelected),
+                keyEquivalent: "x")
+            menu.addItem(cutItem)
+            
+            let pasteItem = NSMenuItem(
+                title: "Paste",
+                action: #selector(pasteSelected),
+                keyEquivalent: "v")
+            menu.addItem(pasteItem)
+            
+            let duplicateItem = NSMenuItem(
+                title: "Duplicate",
+                action: #selector(duplicateSelected),
+                keyEquivalent: "d")
+            menu.addItem(duplicateItem)
+            
+            let selectAllItem = NSMenuItem(
+                title: "Select All",
+                action: #selector(selectAll),
+                keyEquivalent: "a")
+            menu.addItem(selectAllItem)
 
             menu.addItem(NSMenuItem.separator())
 
@@ -455,6 +494,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
         }
         
         overlayWindows.values.forEach { window in
+            // Clear selection when switching away from select mode
+            if window.overlayView.currentTool == .select && tool != .select {
+                window.overlayView.selectedObjects.removeAll()
+                window.overlayView.needsDisplay = true
+            }
             window.overlayView.currentTool = tool
             window.showToolFeedback(tool)
         }
@@ -499,6 +543,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
     @objc func enableTextMode(_ sender: NSMenuItem) {
         switchTool(to: .text)
         updateCurrentToolMenuItem(to: "Text")
+    }
+    
+    @objc func enableSelectMode(_ sender: NSMenuItem) {
+        switchTool(to: .select)
+        updateCurrentToolMenuItem(to: "Select")
     }
 
     @objc func toggleBoardVisibility(_ sender: Any?) {
@@ -628,6 +677,55 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
             overlayWindow.isVisible
         {
             overlayWindow.overlayView.redo()
+        }
+    }
+    
+    @objc func copySelected() {
+        if let currentScreen = getCurrentScreen(),
+            let overlayWindow = overlayWindows[currentScreen],
+            overlayWindow.isVisible,
+            overlayWindow.overlayView.currentTool == .select
+        {
+            overlayWindow.overlayView.copySelectedObjects()
+        }
+    }
+    
+    @objc func cutSelected() {
+        if let currentScreen = getCurrentScreen(),
+            let overlayWindow = overlayWindows[currentScreen],
+            overlayWindow.isVisible,
+            overlayWindow.overlayView.currentTool == .select
+        {
+            overlayWindow.overlayView.cutSelectedObjects()
+        }
+    }
+    
+    @objc func pasteSelected() {
+        if let currentScreen = getCurrentScreen(),
+            let overlayWindow = overlayWindows[currentScreen],
+            overlayWindow.isVisible
+        {
+            overlayWindow.overlayView.pasteObjects()
+        }
+    }
+    
+    @objc func duplicateSelected() {
+        if let currentScreen = getCurrentScreen(),
+            let overlayWindow = overlayWindows[currentScreen],
+            overlayWindow.isVisible,
+            overlayWindow.overlayView.currentTool == .select
+        {
+            overlayWindow.overlayView.duplicateSelectedObjects()
+        }
+    }
+    
+    @objc func selectAll() {
+        if let currentScreen = getCurrentScreen(),
+            let overlayWindow = overlayWindows[currentScreen],
+            overlayWindow.isVisible,
+            overlayWindow.overlayView.currentTool == .select
+        {
+            overlayWindow.overlayView.selectAllObjects()
         }
     }
 
@@ -802,6 +900,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSPopoverD
                 item.keyEquivalent = ShortcutManager.shared.getShortcut(for: .circle)
             case "Text":
                 item.keyEquivalent = ShortcutManager.shared.getShortcut(for: .text)
+            case "Select":
+                item.keyEquivalent = ShortcutManager.shared.getShortcut(for: .select)
             case "Color":
                 item.keyEquivalent = ShortcutManager.shared.getShortcut(for: .colorPicker)
             case "Line Width":

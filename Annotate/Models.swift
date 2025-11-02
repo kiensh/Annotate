@@ -10,6 +10,20 @@ enum ToolType {
     case circle
     case text
     case counter
+    case select
+}
+
+/// Represents a selected object for movement
+enum SelectedObject: Equatable, Hashable {
+    case path(index: Int)
+    case arrow(index: Int)
+    case line(index: Int)
+    case highlight(index: Int)
+    case rectangle(index: Int)
+    case circle(index: Int)
+    case text(index: Int)
+    case counter(index: Int)
+    case none
 }
 
 /// Represents a timed point for pen/highlighter so we can do trailing fade-out
@@ -95,9 +109,18 @@ enum DrawingAction {
     case addText(TextAnnotation)
     case removeText(TextAnnotation)
     case moveText(Int, NSPoint, NSPoint)
+    case moveArrow(Int, NSPoint, NSPoint, NSPoint, NSPoint)  // index, fromStart, fromEnd, toStart, toEnd
+    case moveLine(Int, NSPoint, NSPoint, NSPoint, NSPoint)
+    case moveRectangle(Int, NSPoint, NSPoint, NSPoint, NSPoint)
+    case moveCircle(Int, NSPoint, NSPoint, NSPoint, NSPoint)
+    case movePath(Int, NSPoint)  // index, delta
+    case moveHighlight(Int, NSPoint)  // index, delta
+    case moveCounter(Int, NSPoint, NSPoint)  // index, from, to
     case clearAll(
         [DrawingPath], [Arrow], [Line], [DrawingPath], [Rectangle], [Circle], [TextAnnotation],
         [CounterAnnotation])
+    case pasteObjects([SelectedObject])  // For undo: remove pasted objects
+    case cutObjects([SelectedObject])  // For undo: restore cut objects
 }
 
 // Add to Models.swift
